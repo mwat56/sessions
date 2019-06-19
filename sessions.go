@@ -21,14 +21,8 @@ var (
 )
 
 type (
-	// tSessionData stores the session data.
-	tSessionData map[string]interface{}
-
 	// TSession is the type to get/set session data.
 	TSession interface {
-
-		// Data returns the complete set of session data.
-		Data() *tSessionData
 
 		// Get returns the session data identified by `aKey`.
 		Get(aKey string) interface{}
@@ -94,18 +88,10 @@ func DefaultLifetime() int64 {
 func newID() string {
 	// var r string
 	b := make([]byte, 16)
-	if _, err := rand.Read(b); nil == err {
-		// r = string(b)
-	}
+	rand.Read(b)
 	id := fmt.Sprintf("%d%s", time.Now().UnixNano(), b)
 	b = []byte(id[:24])
-	/*
-		id := strconv.FormatInt(time.Now().UnixNano(), 10) + r
-		for 32 > len(id) {
-			id += id
-		}
-		b = []byte(id[:32])
-	*/
+
 	return base64.URLEncoding.EncodeToString(b)
 } // newID()
 

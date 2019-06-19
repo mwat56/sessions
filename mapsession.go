@@ -8,17 +8,15 @@ package sessions
 
 type (
 
-	// TMapSession is a `map` bases session store
+	// tSessionData stores the session data.
+	tSessionData map[string]interface{}
+
+	// TMapSession is a `map` based session store
 	TMapSession struct {
 		dmData tSessionData
 		dmID   string
 	}
 )
-
-// Data returns the complete set of session data.
-func (dm *TMapSession) Data() *tSessionData {
-	return &dm.dmData
-} // Data()
 
 // Delete removes the session data identified by `aKey`.
 func (dm *TMapSession) Delete(aKey string) error {
