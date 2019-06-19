@@ -72,12 +72,7 @@ func (fs *TFileSessionHandler) GC(aMaxlifetime int64) error {
 	} else {
 		aMaxlifetime *= int64(time.Second)
 	}
-	/*
-		now := time.Now()
-		y, m, d := now.Date()
-		hh, mm, ss := now.Hour(), now.Minute(), now.Second()
-		expired := time.Date(y, m, d, hh, mm, ss, int(0-aMaxlifetime), time.Local)
-	*/
+
 	expired := time.Now().Add(time.Duration(0 - aMaxlifetime))
 	files, err := filepath.Glob(fs.fsDir + "/*.sid")
 	if nil != err {
@@ -88,13 +83,13 @@ func (fs *TFileSessionHandler) GC(aMaxlifetime int64) error {
 		if nil != err {
 			continue
 		}
-		if expired.Before(fi.ModTime()) {
-			os.Remove(file)
+		if fi.ModTime().Before(expired) {
 			fName := filepath.Base(file)
-			if 4 < len(fName) {
-				sid := fName[:len(file)-4]
+			if 5 < len(fName) {
+				sid := fName[:len(fName)-4]
 				delete(fs.fsList, sid)
 			}
+			os.Remove(file)
 		}
 	}
 
@@ -122,10 +117,11 @@ func (fs *TFileSessionHandler) load(aSID string) (*TMapSession, error) {
 	fName := filepath.Join(fs.fsDir, aSID) + ".sid"
 	file, err := os.OpenFile(fName, os.O_RDONLY, 0)
 	if nil != err {
-		fs.fsList[aSID] = &result.dmData
 		if os.IsNotExist(err) {
 			err = nil
 		}
+		fs.fsList[aSID] = &result.dmData
+
 		return result, err
 	}
 	defer file.Close()
@@ -187,7 +183,7 @@ func (fs *TFileSessionHandler) setSessionDir(aSavePath string) error {
 	return nil
 } // setSessionDir()
 
-// `()`
+// `store()` saves the session data on disk.
 func (fs *TFileSessionHandler) store(aSession *TMapSession) error {
 	// locking is done by the caller
 	sid := aSession.dmID
@@ -210,7 +206,7 @@ func (fs *TFileSessionHandler) store(aSession *TMapSession) error {
 	gob.Register(expires)
 
 	return encoder.Encode(store)
-} // Store()
+} // store()
 
 // Store writes session data to disk.
 //

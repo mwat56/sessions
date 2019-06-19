@@ -96,3 +96,31 @@ func TestTFileSessionHandler_load(t *testing.T) {
 		})
 	}
 } // TestTFileSessionHandler_load()
+
+func TestTFileSessionHandler_GC(t *testing.T) {
+	fh1, _ := newFilehandler("./sessions")
+	sid := "aTestSID"
+	s1 := newSession(sid)
+	fh1.store(s1)
+
+	type args struct {
+		aMaxlifetime int64
+	}
+	tests := []struct {
+		name    string
+		fields  *TFileSessionHandler // fields
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+		{" 1", fh1, args{0}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fs := tt.fields
+			if err := fs.GC(tt.args.aMaxlifetime); (err != nil) != tt.wantErr {
+				t.Errorf("TFileSessionHandler.GC() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+} // TestTFileSessionHandler_GC()
