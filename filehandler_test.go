@@ -12,13 +12,13 @@ import (
 )
 
 func TestTFileSessionHandler_setSessionDir(t *testing.T) {
-	fh1 := TFileSessionHandler{}
+	fh1 := TSessionHandler{}
 	type args struct {
 		aSavePath string
 	}
 	tests := []struct {
 		name    string
-		fields  TFileSessionHandler
+		fields  TSessionHandler
 		args    args
 		wantErr bool
 	}{
@@ -28,8 +28,8 @@ func TestTFileSessionHandler_setSessionDir(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fs := &tt.fields
-			if err := fs.setSessionDir(tt.args.aSavePath); (err != nil) != tt.wantErr {
-				t.Errorf("TFileSessionHandler.setSessionDir() error = %v, wantErr %v", err, tt.wantErr)
+			if err := fs.initSessionDir(tt.args.aSavePath); (err != nil) != tt.wantErr {
+				t.Errorf("TFileSessionHandler.initSessionDir() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -40,11 +40,11 @@ func TestTFileSessionHandler_store(t *testing.T) {
 	s1 := newSession("aTestSID")
 
 	type args struct {
-		aSession *TMapSession
+		aSession *TSession
 	}
 	tests := []struct {
 		name    string
-		fields  *TFileSessionHandler // fields
+		fields  *TSessionHandler // fields
 		args    args
 		wantErr bool
 	}{
@@ -65,18 +65,18 @@ func TestTFileSessionHandler_load(t *testing.T) {
 	fh1, _ := newFilehandler("./sessions")
 	sid := "aTestSID"
 	s1 := newSession(sid)
-	w1 := &TMapSession{
-		dmData: tSessionData{},
-		dmID:   sid,
+	w1 := &TSession{
+		sData: tSessionData{},
+		sID:   sid,
 	}
 	type args struct {
 		aSID string
 	}
 	tests := []struct {
 		name    string
-		fields  *TFileSessionHandler // fields
+		fields  *TSessionHandler // fields
 		args    args
-		want    *TMapSession
+		want    *TSession
 		wantErr bool
 	}{
 		// TODO: Add test cases.
@@ -102,23 +102,18 @@ func TestTFileSessionHandler_GC(t *testing.T) {
 	sid := "aTestSID"
 	s1 := newSession(sid)
 	fh1.store(s1)
-
-	type args struct {
-		aMaxlifetime int64
-	}
 	tests := []struct {
 		name    string
-		fields  *TFileSessionHandler // fields
-		args    args
+		fields  *TSessionHandler // fields
 		wantErr bool
 	}{
 		// TODO: Add test cases.
-		{" 1", fh1, args{0}, false},
+		{" 1", fh1, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fs := tt.fields
-			if err := fs.GC(tt.args.aMaxlifetime); (err != nil) != tt.wantErr {
+			if err := fs.GC(); (err != nil) != tt.wantErr {
 				t.Errorf("TFileSessionHandler.GC() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

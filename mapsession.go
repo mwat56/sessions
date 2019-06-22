@@ -11,17 +11,17 @@ type (
 	// tSessionData stores the session data.
 	tSessionData map[string]interface{}
 
-	// TMapSession is a `map` based session store
-	TMapSession struct {
-		dmData tSessionData
-		dmID   string
+	// TSession is a `map` based session store
+	TSession struct {
+		sData tSessionData
+		sID   string
 	}
 )
 
 // Delete removes the session data identified by `aKey`.
-func (dm *TMapSession) Delete(aKey string) error {
+func (so *TSession) Delete(aKey string) error {
 	// If m is nil or there is no such element, delete is a no-op.
-	delete(dm.dmData, aKey)
+	delete(so.sData, aKey)
 
 	return nil
 } // Delete()
@@ -29,8 +29,8 @@ func (dm *TMapSession) Delete(aKey string) error {
 // Get returns the session data identified by `aKey`.
 //
 // If `aKey` doesn't exist the method returns `nil`.
-func (dm *TMapSession) Get(aKey string) interface{} {
-	if result, ok := dm.dmData[aKey]; ok {
+func (so *TSession) Get(aKey string) interface{} {
+	if result, ok := so.sData[aKey]; ok {
 		return result
 	}
 
@@ -38,15 +38,15 @@ func (dm *TMapSession) Get(aKey string) interface{} {
 } // Get()
 
 // SessionID returns the session's ID.
-func (dm *TMapSession) SessionID() string {
-	return dm.dmID
+func (so *TSession) SessionID() string {
+	return so.sID
 } // SessionID()
 
 // Set adds/updates the session data of `aKey` with `aValue`.
 //
 // This implementation always returns `nil`.
-func (dm *TMapSession) Set(aKey string, aValue interface{}) error {
-	dm.dmData[aKey] = aValue
+func (so *TSession) Set(aKey string, aValue interface{}) error {
+	so.sData[aKey] = aValue
 
 	return nil
 } // Set()
@@ -54,10 +54,10 @@ func (dm *TMapSession) Set(aKey string, aValue interface{}) error {
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // `newSession()` returns a new `TMapSession` instance.
-func newSession(aSID string) *TMapSession {
-	result := TMapSession{
-		dmData: make(tSessionData),
-		dmID:   aSID,
+func newSession(aSID string) *TSession {
+	result := TSession{
+		sData: make(tSessionData),
+		sID:   aSID,
 	}
 
 	return &result

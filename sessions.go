@@ -21,8 +21,8 @@ var (
 )
 
 type (
-	// TSession is the type to get/set session data.
-	TSession interface {
+	// tTSession is the type to get/set session data.
+	tTSession interface {
 
 		// Get returns the session data identified by `aKey`.
 		Get(aKey string) interface{}
@@ -37,8 +37,8 @@ type (
 		SessionID() string
 	}
 
-	// TSessionHandler defines the interface of a session handler.
-	TSessionHandler interface {
+	// tTSessionHandler defines the interface of a session handler.
+	tTSessionHandler interface {
 
 		// Init (initialise) the session.
 		//
@@ -51,13 +51,13 @@ type (
 		// Load reads the session data from disk.
 		//
 		// `aSID` The session ID to read data for.
-		Load(aSID string) (*TSession, error)
+		Load(aSID string) (*tTSession, error)
 
 		// Store writes session data to disk..
 		//
 		// `aSID` The current session ID.
 		// `aValue` The session data to store.
-		Store(aSession *TSession) error
+		Store(aSession *tTSession) error
 
 		// Destroy a session.
 		//
@@ -65,16 +65,13 @@ type (
 		Destroy(aSID string) error
 
 		// GC cleans up old sessions.
-		//
-		// `aMaxlifetime` Sessions that have not updated for the
-		// last `aMaxlifetime` seconds will be removed.
-		GC(aMaxlifetime int64) error
+		GC() error
 	}
 )
 
 var (
 	// Sessions is the global session handler.
-	Sessions *TFileSessionHandler
+	Sessions *TSessionHandler
 )
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -86,7 +83,6 @@ func DefaultLifetime() int64 {
 
 // `newID()` returns an ID based on time and random bytes.
 func newID() string {
-	// var r string
 	b := make([]byte, 16)
 	rand.Read(b)
 	id := fmt.Sprintf("%d%s", time.Now().UnixNano(), b)
@@ -118,11 +114,13 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 
 	return http.HandlerFunc(
 		func(aWriter http.ResponseWriter, aRequest *http.Request) {
+			var usersession *TSession
 
 			// (1) get `aSID` from `aRequest`
 			// store `aSID` as `aRequest.Header["Cookie"]` (or "SID"?)
 			if sid := aRequest.FormValue("SID"); 0 < len(sid) {
 				// load session file
+				usersession, _ = Sessions.Load(sid)
 			}
 
 			// (2) init session handling for `aSID`
@@ -132,6 +130,7 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 			aHandler.ServeHTTP(aWriter, aRequest)
 
 			// (4) close session for `aSID`
+			Sessions.Store(usersession)
 
 		})
 } // Wrap()
