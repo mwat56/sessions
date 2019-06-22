@@ -20,24 +20,36 @@ type (
 
 	// TSession is a `map`-based session store
 	TSession struct {
-		sData tSessionData
+		sData *tSessionData
 		sID   string
 	}
 )
 
+// ChangeID generates a new session ID for the data associated with `aSID`.
+func (so *TSession) ChangeID() (*TSession, error) {
+	return sessionHandler.ChangeID(so.sID)
+} // ChangeID()
+
 // Delete removes the session data identified by `aKey`.
 func (so *TSession) Delete(aKey string) error {
-	// If m is nil or there is no such element, delete is a no-op.
-	delete(so.sData, aKey)
+	delete(*so.sData, aKey)
 
 	return nil
 } // Delete()
+
+// Destroy a session.
+//
+func (so *TSession) Destroy() error {
+	go sessionHandler.Destroy(so.sID)
+
+	return nil
+} // Destroy()
 
 // Get returns the session data identified by `aKey`.
 //
 // If `aKey` doesn't exist the method returns `nil`.
 func (so *TSession) Get(aKey string) interface{} {
-	if result, ok := so.sData[aKey]; ok {
+	if result, ok := (*so.sData)[aKey]; ok {
 		return result
 	}
 
@@ -53,7 +65,7 @@ func (so *TSession) SessionID() string {
 //
 // This implementation always returns `nil`.
 func (so *TSession) Set(aKey string, aValue interface{}) error {
-	so.sData[aKey] = aValue
+	(*so.sData)[aKey] = aValue
 
 	return nil
 } // Set()
@@ -62,8 +74,9 @@ func (so *TSession) Set(aKey string, aValue interface{}) error {
 
 // `newSession()` returns a new `TMapSession` instance.
 func newSession(aSID string) *TSession {
+	list := make(tSessionData)
 	result := TSession{
-		sData: make(tSessionData),
+		sData: &list,
 		sID:   aSID,
 	}
 
@@ -76,7 +89,7 @@ var (
 	defaultLifetime = int64(60 * 30)
 
 	// sessionHandler is the global session handler.
-	sessionHandler *TSessionHandler
+	sessionHandler *tSessionHandler
 
 	// `sidName` is the GET/POST identifier fo the session ID.
 	sidName = "SID"
@@ -89,6 +102,7 @@ func DefaultLifetime() int64 {
 	return defaultLifetime
 } // DefaultLifetime()
 
+/*
 // Delete removes the session data of `aSID` identified by `aKey`.
 //
 // `aSID` identifies the session to use.
@@ -96,7 +110,17 @@ func DefaultLifetime() int64 {
 func Delete(aSID, aKey string) error {
 	return sessionHandler.Delete(aSID, aKey)
 } // Delete()
+*/
+/*
+// Destroy a session.
+//
+// `aSID` The session ID being destroyed.
+func Destroy(aSID string) error {
+	return sessionHandler.Destroy(aSID)
+} // Destroy()
+ */
 
+/*
 // Get returns the session data of `aSID` identified by `aKey`.
 //
 // `aSID` identifies the session to use.
@@ -104,12 +128,20 @@ func Delete(aSID, aKey string) error {
 func Get(aSID, aKey string) interface{} {
 	return sessionHandler.Get(aSID, aKey)
 } // Get()
+*/
 
-// GetSession returns the `TSession` for `aSID`.
+// GetSession returns the `TSession` for `aRequest`.
 //
-// `aSID` identifies the session to return.
-func GetSession(aSID string) *TSession {
-	result, _ := sessionHandler.Load(aSID)
+// If `aRequest` doesn't provide as session ID in its form values
+// a new (empty) session is returned.
+//
+// `aRequest` is the HTTP request received by the server.
+func GetSession(aRequest *http.Request) *TSession {
+	sid := aRequest.FormValue(sidName)
+	if 0 == len(sid) {
+		sid = newSID()
+	}
+	result, _ := sessionHandler.Load(sid)
 
 	return result
 } // GetSession()
@@ -131,6 +163,7 @@ func newSID() string {
 	return base64.URLEncoding.EncodeToString(b)
 } // newSID()
 
+/*
 // Set adds/updates the session data of `aKey` with `aValue`.
 //
 // `aSID` identifies the session to use.
@@ -138,15 +171,16 @@ func newSID() string {
 func Set(aSID, aKey string, aValue interface{}) error {
 	return sessionHandler.Set(aSID, aKey, aValue)
 } // Set()
+*/
 
 // SetDefaultLifetime sets the default max. lifetime of a session.
 //
 // `aMaxLifetime` is the number of seconds a session's life lasts.
 func SetDefaultLifetime(aMaxLifetime int64) {
 	if 0 >= aMaxLifetime {
-		defaultLifetime = int64(time.Minute)
+		defaultLifetime = 1800 // 1800 seconds = 30 minutes
 	} else {
-		defaultLifetime = int64(time.Second) * aMaxLifetime
+		defaultLifetime = aMaxLifetime
 	}
 } // SetDefaultLifetime()
 
@@ -160,6 +194,10 @@ func SetSIDname(aSID string) {
 } // SetSIDname
 
 // SIDname returns the configured session name.
+//
+// This name is expected to be used as a FORM field's name or
+// the name of a CGI argument.
+// Its default value is `SID`.
 func SIDname() string {
 	return sidName
 } // SIDname()
@@ -178,7 +216,7 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 		func(aWriter http.ResponseWriter, aRequest *http.Request) {
 			var usersession *TSession
 
-			sid := aRequest.FormValue("SID")
+			sid := aRequest.FormValue(sidName)
 			if 0 == len(sid) {
 				sid = newSID()
 			}

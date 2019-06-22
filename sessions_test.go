@@ -6,7 +6,10 @@
 
 package sessions
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func Test_newID(t *testing.T) {
 	tests := []struct {
@@ -28,7 +31,7 @@ func Test_newID(t *testing.T) {
 func Test_newSession(t *testing.T) {
 	sid := "aTestSID"
 	w1 := &TSession{
-		sData: tSessionData{},
+		sData: &tSessionData{},
 		sID:   sid,
 	}
 	type args struct {
