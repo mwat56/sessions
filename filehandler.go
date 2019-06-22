@@ -31,24 +31,23 @@ type (
 	//
 	tStoreStruct map[string]interface{}
 
-	// TSessionHandler implements a file-based session handler.
-	TSessionHandler struct {
-		shDir      string        // directory to store session files
-		shList     tSessionList  // list of known sessions
-		shLifetime int64         // lifetime seconds
-		shMtx      *sync.RWMutex // guard file operations
+	// tSessionHandler implements a file-based session handler.
+	tSessionHandler struct {
+		shDir  string        // directory to store session files
+		shList tSessionList  // list of known sessions
+		shMtx  *sync.RWMutex // guard file operations
 	}
 )
 
 // `changeID()` moves the data associated with `aOldSID` to `aNewSID`.
-func (sh *TSessionHandler) changeID(aOldSID, aNewSID string) (*TSession, error) {
+func (sh *tSessionHandler) changeID(aOldSID, aNewSID string) (*TSession, error) {
 	// locking is done be the caller
 
 	if data, ok := sh.shList[aOldSID]; ok {
 		sh.shList[aNewSID] = data
 		delete(sh.shList, aOldSID)
 		result := TSession{
-			sData: *data,
+			sData: data,
 			sID:   aNewSID,
 		}
 
@@ -59,7 +58,7 @@ func (sh *TSessionHandler) changeID(aOldSID, aNewSID string) (*TSession, error) 
 } // changeID()
 
 // ChangeID generates a new session ID for the data associated with `aSID`.
-func (sh *TSessionHandler) ChangeID(aSID string) (*TSession, error) {
+func (sh *tSessionHandler) ChangeID(aSID string) (*TSession, error) {
 	sh.shMtx.Lock()
 	defer sh.shMtx.Unlock()
 
@@ -79,10 +78,11 @@ func (sh *TSessionHandler) ChangeID(aSID string) (*TSession, error) {
 } // ChangeID()
 
 // Close the session.
-func (sh *TSessionHandler) Close() error {
+func (sh *tSessionHandler) Close() error {
 	return sh.GC()
 } // Close()
 
+/*
 // Delete removes the session data of `aSID` identified by `aKey`.
 func (sh *TSessionHandler) Delete(aSID, aKey string) error {
 	sh.shMtx.Lock()
@@ -94,17 +94,16 @@ func (sh *TSessionHandler) Delete(aSID, aKey string) error {
 
 	return nil
 } // Delete()
+*/
 
 // Destroy a session.
 //
 // `aSID` The session ID being destroyed.
-func (sh *TSessionHandler) Destroy(aSID string) error {
+func (sh *tSessionHandler) Destroy(aSID string) error {
 	sh.shMtx.Lock()
 	defer sh.shMtx.Unlock()
 
-	// If m is nil or there is no such element, delete is a no-op.
 	delete(sh.shList, aSID)
-
 	file := filepath.Join(sh.shDir, aSID) + ".sid"
 	if _, err := os.Stat(file); nil != err {
 		if e, ok := err.(*os.PathError); ok && e.Err == syscall.ENOENT {
@@ -120,8 +119,8 @@ func (sh *TSessionHandler) Destroy(aSID string) error {
 //
 // `aMaxlifetime` Sessions that have not updated for the
 // last `aMaxlifetime` seconds will be removed.
-func (sh *TSessionHandler) GC() error {
-	ttl := sh.shLifetime * int64(time.Second)
+func (sh *tSessionHandler) GC() error {
+	ttl := defaultLifetime * int64(time.Second)
 	expired := time.Now().Add(time.Duration(0 - ttl))
 	files, err := filepath.Glob(sh.shDir + "/*.sid")
 	if nil != err {
@@ -142,6 +141,7 @@ func (sh *TSessionHandler) GC() error {
 	return nil
 } // GC()
 
+/*
 // Get returns the session data of `aSID` identified by `aKey`.
 func (sh *TSessionHandler) Get(aSID, aKey string) interface{} {
 	sh.shMtx.Lock()
@@ -153,15 +153,16 @@ func (sh *TSessionHandler) Get(aSID, aKey string) interface{} {
 
 	return nil
 } // Get()
+*/
 
 // Init initialises the session.
 //
 // `aSavePath` The path where to store/retrieve the session data.
-func (sh *TSessionHandler) Init(aSavePath string) error {
+func (sh *tSessionHandler) Init(aSavePath string) error {
 	return sh.initSessionDir(aSavePath)
 } // Init()
 
-func (sh *TSessionHandler) initSessionDir(aSavePath string) error {
+func (sh *tSessionHandler) initSessionDir(aSavePath string) error {
 	dir, err := filepath.Abs(aSavePath)
 	if nil != err {
 		return err
@@ -184,12 +185,12 @@ func (sh *TSessionHandler) initSessionDir(aSavePath string) error {
 } // Init()
 
 // `load()` reads the session data for `aSID` from disk.
-func (sh *TSessionHandler) load(aSID string) (*TSession, error) {
+func (sh *tSessionHandler) load(aSID string) (*TSession, error) {
 	// locking is done by the caller
 	result := newSession(aSID)
 
 	if data, ok := sh.shList[aSID]; ok {
-		result.sData = *data
+		result.sData = data
 
 		return result, nil
 	}
@@ -200,7 +201,7 @@ func (sh *TSessionHandler) load(aSID string) (*TSession, error) {
 		if os.IsNotExist(err) {
 			err = nil
 		}
-		sh.shList[aSID] = &result.sData
+		sh.shList[aSID] = result.sData
 
 		return result, err
 	}
@@ -217,14 +218,14 @@ func (sh *TSessionHandler) load(aSID string) (*TSession, error) {
 				if key, ok := id.(string); ok && (key == aSID) {
 					if d, ok := ss["data"]; ok {
 						if data, ok := d.(tSessionData); ok {
-							result.sData, err = data, nil
+							result.sData, err = &data, nil
 						}
 					}
 				}
 			}
 		}
 	}
-	sh.shList[aSID] = &result.sData
+	sh.shList[aSID] = result.sData
 
 	return result, err
 } // load()
@@ -232,13 +233,14 @@ func (sh *TSessionHandler) load(aSID string) (*TSession, error) {
 // Load reads the session data from disk.
 //
 // `aSID` The session ID to read data for.
-func (sh *TSessionHandler) Load(aSID string) (*TSession, error) {
+func (sh *tSessionHandler) Load(aSID string) (*TSession, error) {
 	sh.shMtx.Lock()
 	defer sh.shMtx.Unlock()
 
 	return sh.load(aSID)
 } // Load()
 
+/*
 // Set adds/updates the session data of `aKey` with `aValue`.
 //
 // This implementation always returns `nil`.
@@ -250,12 +252,13 @@ func (sh *TSessionHandler) Set(aSID, aKey string, aValue interface{}) error {
 
 	return session.Set(aKey, aValue)
 } // Set()
+*/
 
 // `store()` saves the session data on disk.
-func (sh *TSessionHandler) store(aSession *TSession) error {
+func (sh *tSessionHandler) store(aSession *TSession) error {
 	// locking is done by the caller
 	sid := aSession.sID
-	sh.shList[sid] = &aSession.sData
+	sh.shList[sid] = aSession.sData
 
 	fName := filepath.Join(sh.shDir, sid) + ".sid"
 	file, err := os.OpenFile(fName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0664)
@@ -265,7 +268,7 @@ func (sh *TSessionHandler) store(aSession *TSession) error {
 	defer file.Close()
 
 	encoder := gob.NewEncoder(file)
-	expires := time.Now().Add(time.Duration(sh.shLifetime)*time.Second + 1)
+	expires := time.Now().Add(time.Duration(defaultLifetime)*time.Second + 1)
 	ss := tStoreStruct{
 		"data":    aSession.sData,
 		"expires": expires,
@@ -281,7 +284,7 @@ func (sh *TSessionHandler) store(aSession *TSession) error {
 //
 // `aSID` The current session ID.
 // `aValue` The session data to store.
-func (sh *TSessionHandler) Store(aSession *TSession) error {
+func (sh *tSessionHandler) Store(aSession *TSession) error {
 	sh.shMtx.Lock()
 	defer sh.shMtx.Unlock()
 
@@ -293,10 +296,9 @@ func (sh *TSessionHandler) Store(aSession *TSession) error {
 // newFilehandler returns a new `TSessionHandler` instance.
 //
 // `aSavePath` is the directory to use for storing sessions files.
-func newFilehandler(aSavePath string) (*TSessionHandler, error) {
-	result := TSessionHandler{
-		shList:     make(tSessionList, 32),
-		shLifetime: defaultLifetime,
+func newFilehandler(aSavePath string) (*tSessionHandler, error) {
+	result := tSessionHandler{
+		shList: make(tSessionList, 32),
 	}
 	err := result.Init(aSavePath)
 

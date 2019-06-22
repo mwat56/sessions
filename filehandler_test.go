@@ -12,13 +12,13 @@ import (
 )
 
 func TestTFileSessionHandler_setSessionDir(t *testing.T) {
-	fh1 := TSessionHandler{}
+	fh1 := tSessionHandler{}
 	type args struct {
 		aSavePath string
 	}
 	tests := []struct {
 		name    string
-		fields  TSessionHandler
+		fields  tSessionHandler
 		args    args
 		wantErr bool
 	}{
@@ -44,7 +44,7 @@ func TestTFileSessionHandler_store(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		fields  *TSessionHandler // fields
+		fields  *tSessionHandler // fields
 		args    args
 		wantErr bool
 	}{
@@ -66,7 +66,7 @@ func TestTFileSessionHandler_load(t *testing.T) {
 	sid := "aTestSID"
 	s1 := newSession(sid)
 	w1 := &TSession{
-		sData: tSessionData{},
+		sData: &tSessionData{},
 		sID:   sid,
 	}
 	type args struct {
@@ -74,7 +74,7 @@ func TestTFileSessionHandler_load(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		fields  *TSessionHandler // fields
+		fields  *tSessionHandler // fields
 		args    args
 		want    *TSession
 		wantErr bool
@@ -104,7 +104,7 @@ func TestTFileSessionHandler_GC(t *testing.T) {
 	fh1.store(s1)
 	tests := []struct {
 		name    string
-		fields  *TSessionHandler // fields
+		fields  *tSessionHandler // fields
 		wantErr bool
 	}{
 		// TODO: Add test cases.
