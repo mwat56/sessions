@@ -3,13 +3,13 @@
 [![GoDoc](https://godoc.org/github.com/mwat56/Nele?status.svg)](https://godoc.org/github.com/mwat56/sessions)
 [![License](https://img.shields.io/eclipse-marketplace/l/notepad4e.svg)](https://github.com/mwat56/sessions/blob/master/LICENSE)
 
-[Sessions](#sessions)
-	- [Purpose](#purpose)
-	- [Installation](#installation)
-	- [Usage](#usage)
-	- [Licence](#licence)
+- [Sessions](#Sessions)
+	- [Purpose / About](#Purpose--About)
+	- [Installation](#Installation)
+	- [Usage](#Usage)
+	- [Licence](#Licence)
 
-## Purpose
+## Purpose / About
 
 I wanted a session data solution that's user-friendly including privacy-friendly.
 When doing some research about saving/retrieving sessions data with `Go` (aka `Golang`) you'll find some slightly different solution which have, however, one detail in common: they all depend on socalled internet `cookies`.
@@ -37,6 +37,15 @@ That critique does not, however, mean that it should be difficult to implement s
 In fact, a huge part of the time I spent developing this package was spent figuring out an easy way to handle session data.
 Now, after it's done, everything seems just 'logical', as if it's obvious how to do things.
 That's an impression probably every programmer knows – at least if they do reflect what they are doing.
+
+An other point to consider was to find a solution that's not dependent on third party facilities.
+That most prominently excludes external database systems (like e.g. MariaDB and others alike).
+The only database system to use is the OS's filesystem, the only system, that is, which doesn't add another possible point of failure.
+And it is by definition faster than any other system because every other database system runs _on top_ of the filesystem and therefore adds some amount of overhead.
+While it can be challenging and interesting to figure out some smart database structure and sophisticated queries to access and retrieve data such an endeavour is often simply over-the-top.
+That's true especially for a task like session handling that has just two tasks to accomplish: point and grab (i.e. reading/loading data) and throw and forget (i.e. writing/storing data).
+
+So, in short: In wanted a system that's unintrusive (i.e. respecting the user's privacy) and doesn't depend on anything but that what is there in any case (i.e. the filesystem).
 
     //TODO
 
