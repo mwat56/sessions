@@ -82,20 +82,6 @@ func (sh *tSessionHandler) Close() error {
 	return sh.GC()
 } // Close()
 
-/*
-// Delete removes the session data of `aSID` identified by `aKey`.
-func (sh *TSessionHandler) Delete(aSID, aKey string) error {
-	sh.shMtx.Lock()
-	defer sh.shMtx.Unlock()
-
-	if session, err := sh.load(aSID); nil == err {
-		return session.Delete(aKey)
-	}
-
-	return nil
-} // Delete()
-*/
-
 // Destroy a session.
 //
 // `aSID` The session ID being destroyed.
@@ -140,20 +126,6 @@ func (sh *tSessionHandler) GC() error {
 
 	return nil
 } // GC()
-
-/*
-// Get returns the session data of `aSID` identified by `aKey`.
-func (sh *TSessionHandler) Get(aSID, aKey string) interface{} {
-	sh.shMtx.Lock()
-	defer sh.shMtx.Unlock()
-
-	if session, err := sh.load(aSID); nil == err {
-		return session.Get(aKey)
-	}
-
-	return nil
-} // Get()
-*/
 
 // Init initialises the session.
 //
@@ -239,20 +211,6 @@ func (sh *tSessionHandler) Load(aSID string) (*TSession, error) {
 
 	return sh.load(aSID)
 } // Load()
-
-/*
-// Set adds/updates the session data of `aKey` with `aValue`.
-//
-// This implementation always returns `nil`.
-func (sh *TSessionHandler) Set(aSID, aKey string, aValue interface{}) error {
-	sh.shMtx.Lock()
-	defer sh.shMtx.Unlock()
-
-	session, _ := sh.load(aSID)
-
-	return session.Set(aKey, aValue)
-} // Set()
-*/
 
 // `store()` saves the session data on disk.
 func (sh *tSessionHandler) store(aSession *TSession) error {
