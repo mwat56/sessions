@@ -25,22 +25,24 @@ type (
 	}
 )
 
-// ChangeID generates a new session ID for the data associated with `aSID`.
+// ChangeID generates a new SID for the current session's data.
 func (so *TSession) ChangeID() (*TSession, error) {
 	return sessionHandler.ChangeID(so.sID)
 } // ChangeID()
 
 // Delete removes the session data identified by `aKey`.
-func (so *TSession) Delete(aKey string) error {
+func (so *TSession) Delete(aKey string) (*TSession, error) {
 	delete(*so.sData, aKey)
 
-	return nil
+	return so, nil
 } // Delete()
 
 // Destroy a session.
 //
+// All internal references and external session files are removed.
 func (so *TSession) Destroy() error {
 	go sessionHandler.Destroy(so.sID)
+	so.sData, so.sID = nil, ""
 
 	return nil
 } // Destroy()
@@ -72,7 +74,7 @@ func (so *TSession) Set(aKey string, aValue interface{}) error {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// `newSession()` returns a new `TMapSession` instance.
+// `newSession()` returns a new `TSession` instance.
 func newSession(aSID string) *TSession {
 	list := make(tSessionData)
 	result := TSession{
@@ -102,44 +104,20 @@ func DefaultLifetime() int64 {
 	return defaultLifetime
 } // DefaultLifetime()
 
-/*
-// Delete removes the session data of `aSID` identified by `aKey`.
-//
-// `aSID` identifies the session to use.
-// `aKey` is the key to access the wanted data.
-func Delete(aSID, aKey string) error {
-	return sessionHandler.Delete(aSID, aKey)
-} // Delete()
-*/
-/*
-// Destroy a session.
-//
-// `aSID` The session ID being destroyed.
-func Destroy(aSID string) error {
-	return sessionHandler.Destroy(aSID)
-} // Destroy()
- */
-
-/*
-// Get returns the session data of `aSID` identified by `aKey`.
-//
-// `aSID` identifies the session to use.
-// `aKey` is the key to access the wanted data.
-func Get(aSID, aKey string) interface{} {
-	return sessionHandler.Get(aSID, aKey)
-} // Get()
-*/
-
 // GetSession returns the `TSession` for `aRequest`.
 //
-// If `aRequest` doesn't provide as session ID in its form values
+// If `aRequest` doesn't provide a session ID in its form values
 // a new (empty) session is returned.
 //
 // `aRequest` is the HTTP request received by the server.
 func GetSession(aRequest *http.Request) *TSession {
 	sid := aRequest.FormValue(sidName)
 	if 0 == len(sid) {
-		sid = newSID()
+		if c, err := aRequest.Cookie(sidName); nil == err {
+			sid = c.Value
+		} else {
+			sid = newSID()
+		}
 	}
 	result, _ := sessionHandler.Load(sid)
 
@@ -162,16 +140,6 @@ func newSID() string {
 
 	return base64.URLEncoding.EncodeToString(b)
 } // newSID()
-
-/*
-// Set adds/updates the session data of `aKey` with `aValue`.
-//
-// `aSID` identifies the session to use.
-// `aKey` is the key to access the wanted data.
-func Set(aSID, aKey string, aValue interface{}) error {
-	return sessionHandler.Set(aSID, aKey, aValue)
-} // Set()
-*/
 
 // SetDefaultLifetime sets the default max. lifetime of a session.
 //
@@ -222,6 +190,13 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 			}
 			// load session file from disk
 			usersession, _ = sessionHandler.Load(sid)
+
+			// store a reference for other handlers
+			c := http.Cookie{
+				Name:  sidName,
+				Value: sid,
+			}
+			aRequest.AddCookie(&c)
 
 			// the original handler can access the session now
 			aHandler.ServeHTTP(aWriter, aRequest)
