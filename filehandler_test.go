@@ -7,11 +7,11 @@
 package sessions
 
 import (
-	"reflect"
 	"testing"
+	"time"
 )
 
-func TestTFileSessionHandler_setSessionDir(t *testing.T) {
+func Test_tSessionHandler_setSessionDir(t *testing.T) {
 	fh1 := tSessionHandler{}
 	type args struct {
 		aSavePath string
@@ -29,15 +29,18 @@ func TestTFileSessionHandler_setSessionDir(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fs := &tt.fields
 			if err := fs.initSessionDir(tt.args.aSavePath); (err != nil) != tt.wantErr {
-				t.Errorf("TFileSessionHandler.initSessionDir() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("tSessionHandler.initSessionDir() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
-} // TestTFileSessionHandler_setSessionDir()
+} // Test_tSessionHandler_setSessionDir()
 
-func TestTFileSessionHandler_store(t *testing.T) {
-	fh1, _ := newFilehandler("./sessions")
+func Test_tSessionHandler_store(t *testing.T) {
+	fh1, _ := newSessionHandler("./sessions")
 	s1 := newSession("aTestSID")
+	s1.Set("Zeichenkette", "eine Zeichenkette")
+	s1.Set("Zahl", 123456789)
+	s1.Set("Datum", time.Now())
 
 	type args struct {
 		aSession *TSession
@@ -55,20 +58,23 @@ func TestTFileSessionHandler_store(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fs := tt.fields
 			if err := fs.store(tt.args.aSession); (err != nil) != tt.wantErr {
-				t.Errorf("TFileSessionHandler.store() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("tSessionHandler.store() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
-} // TestTFileSessionHandler_store()
+} // Test_tSessionHandler_store()
 
-func TestTFileSessionHandler_load(t *testing.T) {
-	fh1, _ := newFilehandler("./sessions")
+func Test_tSessionHandler_load(t *testing.T) {
+	fh1, _ := newSessionHandler("./sessions")
 	sid := "aTestSID"
-	s1 := newSession(sid)
-	w1 := &TSession{
-		sData: &tSessionData{},
-		sID:   sid,
-	}
+	// s1 := newSession(sid)
+	// s1.Set("Zeichenkette", "eine Zeichenkette")
+	// s1.Set("Zahl", 123456789)
+	// s1.Set("Datum", time.Now())
+	// w1 := &TSession{
+	// 	sData: s1.sData, // &tSessionData{},
+	// 	sID:   sid,
+	// }
 	type args struct {
 		aSID string
 	}
@@ -76,30 +82,31 @@ func TestTFileSessionHandler_load(t *testing.T) {
 		name    string
 		fields  *tSessionHandler // fields
 		args    args
-		want    *TSession
+		want    int //*TSession
 		wantErr bool
 	}{
 		// TODO: Add test cases.
-		{" 1", fh1, args{s1.SessionID()}, w1, false},
+		{" 1", fh1, args{sid}, 3, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fs := tt.fields
 			got, err := fs.load(tt.args.aSID)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("TFileSessionHandler.load() error = %v,\nwantErr %v", err, tt.wantErr)
+				t.Errorf("tSessionHandler.load() error = %v,\nwantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("TFileSessionHandler.load() = %v,\nwant %v", got, tt.want)
+			// if !reflect.DeepEqual(got, tt.want) {
+			if got.Len() != tt.want {
+				t.Errorf("tSessionHandler.load() = %v,\nwant %v", got.Len(), tt.want)
 			}
 		})
 	}
-} // TestTFileSessionHandler_load()
+} // Test_tSessionHandler_load()
 
-func TestTFileSessionHandler_GC(t *testing.T) {
-	fh1, _ := newFilehandler("./sessions")
-	sid := "aTestSID"
+func Test_tSessionHandler_GC(t *testing.T) {
+	fh1, _ := newSessionHandler("./sessions")
+	sid := "gcTestSID"
 	s1 := newSession(sid)
 	fh1.store(s1)
 	tests := []struct {
@@ -114,8 +121,8 @@ func TestTFileSessionHandler_GC(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fs := tt.fields
 			if err := fs.GC(); (err != nil) != tt.wantErr {
-				t.Errorf("TFileSessionHandler.GC() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("tSessionHandler.GC() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
-} // TestTFileSessionHandler_GC()
+} // Test_tSessionHandler_GC()
