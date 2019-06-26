@@ -58,6 +58,11 @@ func (so *TSession) Get(aKey string) interface{} {
 	return nil
 } // Get()
 
+// Len returns the current length of the list of session vars.
+func (so *TSession) Len() int {
+	return len(*so.sData)
+} // Len()
+
 // SessionID returns the session's ID.
 func (so *TSession) SessionID() string {
 	return so.sID
@@ -86,11 +91,11 @@ func newSession(aSID string) *TSession {
 } // newSession()
 
 var (
-	// `defaultLifetime` is the lifetime for an unused session.
+	// `defaultLifetime` is the max. TTL for an unused session.
 	// It defaults to 1800 seconds (30 minutes).
-	defaultLifetime = int64(60 * 30)
+	defaultLifetime = 60 * 30
 
-	// sessionHandler is the global session handler.
+	// `sessionHandler` is the global session handler.
 	sessionHandler *tSessionHandler
 
 	// `sidName` is the GET/POST identifier fo the session ID.
@@ -100,7 +105,7 @@ var (
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // DefaultLifetime returns the default max. TTL of a session.
-func DefaultLifetime() int64 {
+func DefaultLifetime() int {
 	return defaultLifetime
 } // DefaultLifetime()
 
@@ -144,7 +149,7 @@ func newSID() string {
 // SetDefaultLifetime sets the default max. lifetime of a session.
 //
 // `aMaxLifetime` is the number of seconds a session's life lasts.
-func SetDefaultLifetime(aMaxLifetime int64) {
+func SetDefaultLifetime(aMaxLifetime int) {
 	if 0 >= aMaxLifetime {
 		defaultLifetime = 1800 // 1800 seconds = 30 minutes
 	} else {
@@ -178,7 +183,7 @@ func SIDname() string {
 //
 // `aSessionDir` is the name of the directory to store session files.
 func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
-	sessionHandler, _ = newFilehandler(aSessionDir)
+	sessionHandler, _ = newSessionHandler(aSessionDir)
 
 	return http.HandlerFunc(
 		func(aWriter http.ResponseWriter, aRequest *http.Request) {
@@ -201,7 +206,7 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 			// the original handler can access the session now
 			aHandler.ServeHTTP(aWriter, aRequest)
 
-			// save the (possibly modified) session data
+			// save the updated session data
 			go sessionHandler.Store(usersession)
 		})
 } // Wrap()
