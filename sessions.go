@@ -7,6 +7,7 @@
 package sessions
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
@@ -97,14 +98,22 @@ var (
 
 	// `sessionHandler` is the global session handler.
 	sessionHandler *tSessionHandler
+)
 
+type (
+	// `tSIDname` is a string that is not a string
+	// (builtin types should not be used as `Context` keys).
+	tSIDname string
+)
+
+var (
 	// `sidName` is the GET/POST identifier fo the session ID.
-	sidName = "SID"
+	sidName = tSIDname("SID")
 )
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// DefaultLifetime returns the default max. TTL of a session.
+// DefaultLifetime returns the default max. TTL of a session (in seconds).
 func DefaultLifetime() int {
 	return defaultLifetime
 } // DefaultLifetime()
@@ -116,10 +125,11 @@ func DefaultLifetime() int {
 //
 // `aRequest` is the HTTP request received by the server.
 func GetSession(aRequest *http.Request) *TSession {
-	sid := aRequest.FormValue(sidName)
+	sid := aRequest.FormValue(string(sidName))
 	if 0 == len(sid) {
-		if c, err := aRequest.Cookie(sidName); nil == err {
-			sid = c.Value
+		ctx := aRequest.Context()
+		if id, ok := ctx.Value(sidName).(tSIDname); ok {
+			sid = string(id)
 		} else {
 			sid = newSID()
 		}
@@ -128,13 +138,6 @@ func GetSession(aRequest *http.Request) *TSession {
 
 	return result
 } // GetSession()
-
-// NewSession returns a new `TSession` instance.
-func NewSession() *TSession {
-	result, _ := sessionHandler.Load(newSID())
-
-	return result
-} // NewSession()
 
 // `newSID()` returns an ID based on time and random bytes.
 func newSID() string {
@@ -162,7 +165,7 @@ func SetDefaultLifetime(aMaxLifetime int) {
 // `aSID` identifies the session data.
 func SetSIDname(aSID string) {
 	if 0 < len(aSID) {
-		sidName = aSID
+		sidName = tSIDname(aSID)
 	}
 } // SetSIDname
 
@@ -172,7 +175,7 @@ func SetSIDname(aSID string) {
 // the name of a CGI argument.
 // Its default value is `SID`.
 func SIDname() string {
-	return sidName
+	return string(sidName)
 } // SIDname()
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -189,19 +192,16 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 		func(aWriter http.ResponseWriter, aRequest *http.Request) {
 			var usersession *TSession
 
-			sid := aRequest.FormValue(sidName)
+			sid := aRequest.FormValue(string(sidName))
 			if 0 == len(sid) {
 				sid = newSID()
 			}
+			// store a reference for other handlers
+			ctx := context.WithValue(aRequest.Context(), sidName, sid)
+			aRequest = aRequest.WithContext(ctx)
+
 			// load session file from disk
 			usersession, _ = sessionHandler.Load(sid)
-
-			// store a reference for other handlers
-			c := http.Cookie{
-				Name:  sidName,
-				Value: sid,
-			}
-			aRequest.AddCookie(&c)
 
 			// the original handler can access the session now
 			aHandler.ServeHTTP(aWriter, aRequest)
