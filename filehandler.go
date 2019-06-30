@@ -106,7 +106,7 @@ func (sh *tSessionHandler) Destroy(aSID string) error {
 // Sessions that have not been updated for at least
 // `DefaultLifetime()` seconds will be removed.
 func (sh *tSessionHandler) GC() error {
-	secs := time.Now().Unix() - int64(defaultLifetime)
+	secs := time.Now().Unix() - int64(sessionTTL)
 	expired := time.Unix(secs, 0)
 	files, err := filepath.Glob(sh.shDir + "/*.sid")
 	if nil != err {
@@ -229,7 +229,7 @@ func (sh *tSessionHandler) store(aSession *TSession) error {
 	defer file.Close()
 
 	now := time.Now()
-	expireSec := now.Unix() + int64(defaultLifetime) + 1
+	expireSec := now.Unix() + int64(sessionTTL) + 1
 	ss := tStoreStruct{
 		"data":    aSession.sData,
 		"expires": expireSec,

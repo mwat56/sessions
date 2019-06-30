@@ -92,9 +92,9 @@ func newSession(aSID string) *TSession {
 } // newSession()
 
 var (
-	// `defaultLifetime` is the max. TTL for an unused session.
-	// It defaults to 1800 seconds (30 minutes).
-	defaultLifetime = 60 * 30
+	// `sessionTTL` is the max. TTL for an unused session.
+	// It defaults to 600 seconds (10 minutes).
+	sessionTTL = 600
 
 	// `sessionHandler` is the global session handler.
 	sessionHandler *tSessionHandler
@@ -113,15 +113,10 @@ var (
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// DefaultLifetime returns the default max. TTL of a session (in seconds).
-func DefaultLifetime() int {
-	return defaultLifetime
-} // DefaultLifetime()
-
 // GetSession returns the `TSession` for `aRequest`.
 //
 // If `aRequest` doesn't provide a session ID in its form values
-// a new (empty) session is returned.
+// a new (empty) `TSession` instance is returned.
 //
 // `aRequest` is the HTTP request received by the server.
 func GetSession(aRequest *http.Request) *TSession {
@@ -149,16 +144,21 @@ func newSID() string {
 	return base64.URLEncoding.EncodeToString(b)
 } // newSID()
 
-// SetDefaultLifetime sets the default max. lifetime of a session.
+// SessionTTL returns the Time-To-Life of a session (in seconds).
+func SessionTTL() int {
+	return sessionTTL
+} // SessionTTL()
+
+// SetSessionTTL sets the default max. lifetime of a session.
 //
-// `aMaxLifetime` is the number of seconds a session's life lasts.
-func SetDefaultLifetime(aMaxLifetime int) {
-	if 0 >= aMaxLifetime {
-		defaultLifetime = 1800 // 1800 seconds = 30 minutes
+// `aTTL` is the number of seconds a session's life lasts.
+func SetSessionTTL(aTTL int) {
+	if 0 >= aTTL {
+		sessionTTL = 600 // 600 seconds == 10 minutes
 	} else {
-		defaultLifetime = aMaxLifetime
+		sessionTTL = aTTL
 	}
-} // SetDefaultLifetime()
+} // SetSessionTTL()
 
 // SetSIDname sets the session name.
 //
@@ -196,7 +196,7 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 			if 0 == len(sid) {
 				sid = newSID()
 			}
-			// store a reference for other handlers
+			// store a reference for `GetSession()`
 			ctx := context.WithValue(aRequest.Context(), sidName, sid)
 			aRequest = aRequest.WithContext(ctx)
 
