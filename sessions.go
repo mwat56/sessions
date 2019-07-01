@@ -11,7 +11,11 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
+	"path/filepath"
+	"syscall"
 	"time"
 )
 
@@ -26,26 +30,46 @@ type (
 	}
 )
 
+var (
+	// the channel to communicate with `sessionMonitor()`
+	chSession = /* chan tShRequest */ make(chan tShRequest, 64)
+)
+
 // ChangeID generates a new SID for the current session's data.
-func (so *TSession) ChangeID() (*TSession, error) {
-	return sessionHandler.ChangeID(so.sID)
+func (so *TSession) ChangeID() *TSession {
+	answer := make(chan *TSession)
+	request := tShRequest{
+		req:   shChangeSession,
+		sid:   so.sID,
+		reply: answer,
+	}
+	chSession <- request
+	reply := <-answer
+	*so = *reply
+
+	return so
 } // ChangeID()
 
 // Delete removes the session data identified by `aKey`.
-func (so *TSession) Delete(aKey string) (*TSession, error) {
+func (so *TSession) Delete(aKey string) *TSession {
 	delete(*so.sData, aKey)
 
-	return so, nil
+	return so
 } // Delete()
 
 // Destroy a session.
 //
 // All internal references and external session files are removed.
-func (so *TSession) Destroy() error {
-	go sessionHandler.Destroy(so.sID)
-	so.sData, so.sID = nil, ""
-
-	return nil
+func (so *TSession) Destroy() {
+	answer := make(chan *TSession)
+	request := tShRequest{
+		req:   shDestroySession,
+		sid:   so.sID,
+		reply: answer,
+	}
+	chSession <- request
+	reply := <-answer
+	*so = *reply
 } // Destroy()
 
 // Get returns the session data identified by `aKey`.
@@ -72,10 +96,8 @@ func (so *TSession) SessionID() string {
 // Set adds/updates the session data of `aKey` with `aValue`.
 //
 // This implementation always returns `nil`.
-func (so *TSession) Set(aKey string, aValue interface{}) error {
+func (so *TSession) Set(aKey string, aValue interface{}) {
 	(*so.sData)[aKey] = aValue
-
-	return nil
 } // Set()
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -129,7 +151,15 @@ func GetSession(aRequest *http.Request) *TSession {
 			sid = newSID()
 		}
 	}
-	result, _ := sessionHandler.Load(sid)
+
+	answer := make(chan *TSession)
+	request := tShRequest{
+		req:   shGetSession,
+		sid:   sid,
+		reply: answer,
+	}
+	chSession <- request
+	result := <-answer
 
 	return result
 } // GetSession()
@@ -149,7 +179,7 @@ func SessionTTL() int {
 	return sessionTTL
 } // SessionTTL()
 
-// SetSessionTTL sets the default max. lifetime of a session.
+// SetSessionTTL sets the lifetime of a session.
 //
 // `aTTL` is the number of seconds a session's life lasts.
 func SetSessionTTL(aTTL int) {
@@ -186,7 +216,24 @@ func SIDname() string {
 //
 // `aSessionDir` is the name of the directory to store session files.
 func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
-	sessionHandler, _ = newSessionHandler(aSessionDir)
+	dir, err := filepath.Abs(aSessionDir)
+	if nil != err {
+		log.Fatalf("%s: %v", os.Args[0], err)
+	}
+	if fi, err := os.Stat(dir); nil != err {
+		if e, ok := err.(*os.PathError); ok && e.Err == syscall.ENOENT {
+			fmode := os.ModeDir | 0775
+			if err := os.MkdirAll(filepath.FromSlash(dir), fmode); nil != err {
+				log.Fatalf("%s: %v", os.Args[0], err)
+			}
+		} else {
+			log.Fatalf("%s: %v", os.Args[0], err)
+		}
+	} else if !fi.IsDir() {
+		err = fmt.Errorf("Not a directory: %q", dir)
+		log.Fatalf("%s: %v", os.Args[0], err)
+	}
+	go sessionMonitor(dir, chSession)
 
 	return http.HandlerFunc(
 		func(aWriter http.ResponseWriter, aRequest *http.Request) {
@@ -201,13 +248,26 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 			aRequest = aRequest.WithContext(ctx)
 
 			// load session file from disk
-			usersession, _ = sessionHandler.Load(sid)
+			answer := make(chan *TSession, 2)
+			request := tShRequest{
+				req:   shGetSession,
+				sid:   sid,
+				reply: answer,
+			}
+			chSession <- request
+			usersession = <-answer
 
 			// the original handler can access the session now
 			aHandler.ServeHTTP(aWriter, aRequest)
 
-			// save the updated session data
-			go sessionHandler.Store(usersession)
+			// save the possibly updated session data
+			request = tShRequest{
+				req:   shStoreSession,
+				sid:   usersession.sID,
+				reply: answer,
+			}
+			chSession <- request
+			<-answer
 		})
 } // Wrap()
 
