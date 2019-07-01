@@ -139,8 +139,10 @@ func loadSession(aSessionDir, aSID string) *tSessionData {
 // `sessionMonitor()` handles the access to the internal list of session data.
 func sessionMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 	shList := make(tShList, 32) // list of known/active sessions
+	timer := time.NewTimer(time.Duration(sessionTTL)*time.Second + 1)
+	defer timer.Stop()
 
-	for { // wait for requests
+	for { // wait indefinitly for requests
 		select {
 		case request := <-aRequest:
 			switch request.req {
@@ -187,11 +189,13 @@ func sessionMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 					go goStore(aSessionDir, request.sid, data)
 				}
 				request.reply <- &TSession{}
-			}
-		case <-time.After(time.Duration(sessionTTL) * time.Second):
+			} // switch
+
+		case <-timer.C:
 			go goGC(aSessionDir)
-		}
-	}
+			timer.Reset(time.Duration(sessionTTL)*time.Second + 1)
+		} // select
+	} // for
 } // sessionMonitor()
 
 /* _EoF_ */
