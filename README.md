@@ -1,6 +1,6 @@
 # Sessions
 
-[![GoDoc](https://godoc.org/github.com/mwat56/Nele?status.svg)](https://godoc.org/github.com/mwat56/sessions)
+[![GoDoc](https://godoc.org/github.com/mwat56/sessions?status.svg)](https://godoc.org/github.com/mwat56/sessions)
 [![License](https://img.shields.io/eclipse-marketplace/l/notepad4e.svg)](https://github.com/mwat56/sessions/blob/master/LICENSE)
 
 - [Sessions](#Sessions)
