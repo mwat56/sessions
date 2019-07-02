@@ -23,34 +23,25 @@ type (
 	// `tSessionData` stores the session data.
 	tSessionData map[string]interface{}
 
-	// TSession is a `map`-based session store
+	// TSession is a `map`-based session data store.
 	TSession struct {
 		sData *tSessionData
 		sID   string
 	}
 )
 
-var (
-	// the channel to communicate with `sessionMonitor()`
-	chSession = /* chan tShRequest */ make(chan tShRequest, 64)
-)
-
 // ChangeID generates a new SID for the current session's data.
 func (so *TSession) ChangeID() *TSession {
-	answer := make(chan *TSession)
-	request := tShRequest{
-		req:   shChangeSession,
-		sid:   so.sID,
-		reply: answer,
-	}
-	chSession <- request
-	reply := <-answer
-	*so = *reply
+	result := doRequest(so.sID, shChangeSession)
+	so.sID = result.sID
+	so.sData = result.sData
 
 	return so
 } // ChangeID()
 
 // Delete removes the session data identified by `aKey`.
+//
+//	`aKey` The identifier to lookup.
 func (so *TSession) Delete(aKey string) *TSession {
 	delete(*so.sData, aKey)
 
@@ -61,20 +52,15 @@ func (so *TSession) Delete(aKey string) *TSession {
 //
 // All internal references and external session files are removed.
 func (so *TSession) Destroy() {
-	answer := make(chan *TSession)
-	request := tShRequest{
-		req:   shDestroySession,
-		sid:   so.sID,
-		reply: answer,
-	}
-	chSession <- request
-	reply := <-answer
-	*so = *reply
+	doRequest(so.sID, shDestroySession)
+	so.sID, so.sData = "", nil
 } // Destroy()
 
 // Get returns the session data identified by `aKey`.
 //
 // If `aKey` doesn't exist the method returns `nil`.
+//
+//	`aKey` The identifier to lookup.
 func (so *TSession) Get(aKey string) interface{} {
 	if result, ok := (*so.sData)[aKey]; ok {
 		return result
@@ -83,35 +69,25 @@ func (so *TSession) Get(aKey string) interface{} {
 	return nil
 } // Get()
 
+// ID returns the session's ID.
+func (so *TSession) ID() string {
+	return so.sID
+} // ID()
+
 // Len returns the current length of the list of session vars.
 func (so *TSession) Len() int {
 	return len(*so.sData)
 } // Len()
 
-// SessionID returns the session's ID.
-func (so *TSession) SessionID() string {
-	return so.sID
-} // SessionID()
-
 // Set adds/updates the session data of `aKey` with `aValue`.
 //
-// This implementation always returns `nil`.
+//	`aKey` The identifier to lookup.
+//	`aValue` The value to assign.
 func (so *TSession) Set(aKey string, aValue interface{}) {
 	(*so.sData)[aKey] = aValue
 } // Set()
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-// `newSession()` returns a new `TSession` instance.
-func newSession(aSID string) *TSession {
-	list := make(tSessionData)
-	result := TSession{
-		sData: &list,
-		sID:   aSID,
-	}
-
-	return &result
-} // newSession()
 
 var (
 	// `sessionTTL` is the max. TTL for an unused session.
@@ -135,6 +111,31 @@ var (
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+var (
+	// The channel to communicate with `sessionMonitor()`
+	// (`tShRequest` defined in `monitor.go`).
+	chSession = /* chan tShRequest */ make(chan tShRequest, 64)
+)
+
+// `doRequest()` queries the session manager for certain data.
+//
+//	`aSID` The session ID to use for lookup.
+//	`aType` The lookup type.
+func doRequest(aSID string, aType tShLookupType) *TSession {
+	answer := make(chan *TSession)
+	defer close(answer)
+
+	request := tShRequest{
+		req:   aType,
+		sid:   aSID,
+		reply: answer,
+	}
+	chSession <- request
+	result := <-answer
+
+	return result
+} // doRequest()
+
 // GetSession returns the `TSession` for `aRequest`.
 //
 // If `aRequest` doesn't provide a session ID in its form values
@@ -152,16 +153,7 @@ func GetSession(aRequest *http.Request) *TSession {
 		}
 	}
 
-	answer := make(chan *TSession)
-	request := tShRequest{
-		req:   shGetSession,
-		sid:   sid,
-		reply: answer,
-	}
-	chSession <- request
-	result := <-answer
-
-	return result
+	return doRequest(sid, shGetSession)
 } // GetSession()
 
 // `newSID()` returns an ID based on time and random bytes.
@@ -237,8 +229,6 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 
 	return http.HandlerFunc(
 		func(aWriter http.ResponseWriter, aRequest *http.Request) {
-			var usersession *TSession
-
 			sid := aRequest.FormValue(string(sidName))
 			if 0 == len(sid) {
 				sid = newSID()
@@ -248,26 +238,13 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 			aRequest = aRequest.WithContext(ctx)
 
 			// load session file from disk
-			answer := make(chan *TSession, 2)
-			request := tShRequest{
-				req:   shGetSession,
-				sid:   sid,
-				reply: answer,
-			}
-			chSession <- request
-			usersession = <-answer
+			doRequest(sid, shGetSession)
 
 			// the original handler can access the session now
 			aHandler.ServeHTTP(aWriter, aRequest)
 
 			// save the possibly updated session data
-			request = tShRequest{
-				req:   shStoreSession,
-				sid:   usersession.sID,
-				reply: answer,
-			}
-			chSession <- request
-			<-answer
+			doRequest(sid, shStoreSession)
 		})
 } // Wrap()
 

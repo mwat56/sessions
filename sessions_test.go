@@ -7,9 +7,38 @@
 package sessions
 
 import (
-	"reflect"
+	"path/filepath"
 	"testing"
 )
+
+func Test_doRequest(t *testing.T) {
+	sdir, _ := filepath.Abs("./sessions")
+	go sessionMonitor(sdir, chSession)
+	defer func() {
+		chSession <- tShRequest{req: shTerminate}
+	}()
+	sid := "aTestSID"
+
+	type args struct {
+		aSID     string
+		aRequest tShLookupType
+	}
+	tests := []struct {
+		name string
+		args args
+		want int //*TSession
+	}{
+		// TODO: Add test cases.
+		{" 1", args{sid, shGetSession}, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := doRequest(tt.args.aSID, tt.args.aRequest); got.Len() != tt.want {
+				t.Errorf("doRequest() = %v,\nwant %v", got.Len(), tt.want)
+			}
+		})
+	}
+} // Test_doRequest()
 
 func Test_newID(t *testing.T) {
 	tests := []struct {
@@ -27,29 +56,3 @@ func Test_newID(t *testing.T) {
 		})
 	}
 } // Test_newID()
-
-func Test_newSession(t *testing.T) {
-	sid := "aTestSID"
-	w1 := &TSession{
-		sData: &tSessionData{},
-		sID:   sid,
-	}
-	type args struct {
-		aSID string
-	}
-	tests := []struct {
-		name string
-		args args
-		want *TSession
-	}{
-		// TODO: Add test cases.
-		{" 1", args{sid}, w1},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := newSession(tt.args.aSID); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newSession() = %v,\nwant %v", got, tt.want)
-			}
-		})
-	}
-} // Test_newSession()
