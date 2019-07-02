@@ -259,6 +259,17 @@ func (sh *tSessionHandler) Store(aSession *TSession) error {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+// `newSession()` returns a new `TSession` instance.
+func newSession(aSID string) *TSession {
+	list := make(tSessionData)
+	result := TSession{
+		sData: &list,
+		sID:   aSID,
+	}
+
+	return &result
+} // newSession()
+
 // `newSessionHandler()` returns a new `tSessionHandler` instance.
 //
 // `aSavePath` is the directory to use for storing sessions files.
