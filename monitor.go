@@ -18,30 +18,33 @@ type (
 	tShList map[string]*tSessionData
 
 	// the kind of request to `sessionMonitor()`
-	tShRequestType int
+	tShLookupType int
 
 	// the request structure transported to `sessionMonitor()`
 	tShRequest struct {
-		req   tShRequestType
+		req   tShLookupType
 		sid   string
 		reply chan *TSession
 	}
 )
 
 const (
-	// the possible request types send to `sessionMonitor()`
-	shNone = tShRequestType(iota)
+	// The possible request types send to `sessionMonitor()`
+	shNone = tShLookupType(1 << iota)
 	shChangeSession
 	shCloseSession
 	shDestroySession
 	shGetSession
 	shStoreSession
+	shTerminate // for testing only: terminate `sessionMonitor()`
 )
 
 // `goGC()` cleans up old sessions.
 //
 // Sessions that have not been updated for at least
 // `SessionTTL()` seconds will be removed.
+//
+//	`aSessionDir` The directory where the session files are stored.
 func goGC(aSessionDir string) {
 	secs := time.Now().Unix() - int64(sessionTTL)
 	expired := time.Unix(secs, 0)
@@ -64,7 +67,8 @@ func goGC(aSessionDir string) {
 
 // `goRemove()` removes the session file.
 //
-// `aSID` The session ID being destroyed.
+//	`aSessionDir` The directory where the session files are stored.
+//	`aSID` The session ID being destroyed.
 func goRemove(aSessionDir, aSID string) {
 	fName := filepath.Join(aSessionDir, aSID) + ".sid"
 	if _, err := os.Stat(fName); nil != err {
@@ -75,6 +79,9 @@ func goRemove(aSessionDir, aSID string) {
 } // goRemove()
 
 // `goStore()` saves `aData` of `aSID` on disk.
+//
+//	`aSessionDir` The directory where the session files are stored.
+//	`aSID` The session ID whose data are to be stored.
 func goStore(aSessionDir, aSID string, aData *tSessionData) {
 	now := time.Now()
 	expireSec := now.Unix() + int64(sessionTTL) + 1
@@ -101,6 +108,9 @@ func goStore(aSessionDir, aSID string, aData *tSessionData) {
 } // goStore()
 
 // `loadSession()` reads the data for `aSID` from disk.
+//
+//	`aSessionDir` The directory where the session files are stored.
+//	`aSID` The session ID whose data are to be read from disk.
 func loadSession(aSessionDir, aSID string) *tSessionData {
 	sData := make(tSessionData)
 	fName := filepath.Join(aSessionDir, aSID) + ".sid"
@@ -137,20 +147,20 @@ func loadSession(aSessionDir, aSID string) *tSessionData {
 } // loadSession()
 
 // `sessionMonitor()` handles the access to the internal list of session data.
+//
+//	`aSessionDir` The directory where the session files are stored.
 func sessionMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 	shList := make(tShList, 32) // list of known/active sessions
 	timer := time.NewTimer(time.Duration(sessionTTL)*time.Second + 1)
 	defer timer.Stop()
 
-	for { // wait indefinitly for requests
+	for { // wait for requests
 		select {
 		case request := <-aRequest:
 			switch request.req {
-			case shChangeSession:
+			case shChangeSession: // X
 				newsid := newSID()
-				result := &TSession{
-					sID: newsid,
-				}
+				result := TSession{sID: newsid}
 				if data, ok := shList[request.sid]; ok {
 					shList[newsid] = data
 					delete(shList, request.sid)
@@ -161,18 +171,18 @@ func sessionMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 					result.sData = &list
 				}
 				go goRemove(aSessionDir, request.sid)
-				request.reply <- result
+				request.reply <- &result
 
 			case shCloseSession:
 				go goGC(aSessionDir)
 				request.reply <- &TSession{sID: request.sid}
 
-			case shDestroySession:
+			case shDestroySession: // X
 				delete(shList, request.sid)
 				go goRemove(aSessionDir, request.sid)
 				request.reply <- &TSession{}
 
-			case shGetSession:
+			case shGetSession: // XX
 				result := &TSession{
 					sID: request.sid,
 				}
@@ -184,11 +194,14 @@ func sessionMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 				}
 				request.reply <- result
 
-			case shStoreSession:
+			case shStoreSession: // X
 				if data, ok := shList[request.sid]; ok {
 					go goStore(aSessionDir, request.sid, data)
 				}
 				request.reply <- &TSession{}
+
+			case shTerminate:
+				return
 			} // switch
 
 		case <-timer.C:
