@@ -82,23 +82,23 @@ func goRemove(aSessionDir, aSID string) {
 // `goStore()` saves `aData` of `aSID` on disk.
 //
 //	`aSessionDir` The directory where the session files are stored.
-//	`aSID` The session ID whose data are to be stored.
-func goStore(aSessionDir, aSID string, aData *tSessionData) {
+//	`aSession` The session whose data are to be stored.
+func goStore(aSessionDir string, aSession *TSession) {
 	now := time.Now()
 	expireSec := now.Unix() + int64(sessionTTL) + 1
 	ss := tStoreStruct{
-		"data":    aData,
+		"data":    aSession.sData,
 		"expires": expireSec,
-		"sid":     aSID,
+		"sid":     aSession.sID,
 	}
-	gob.Register(aData)
+	gob.Register(aSession.sData)
 	gob.Register(now)
 	gob.Register(ss)
-	for _, val := range *aData {
+	for _, val := range *aSession.sData {
 		gob.Register(val)
 	}
 
-	fName := filepath.Join(aSessionDir, aSID) + ".sid"
+	fName := filepath.Join(aSessionDir, aSession.sID) + ".sid"
 	file, err := os.OpenFile(fName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0664)
 	if nil != err {
 		return
@@ -206,10 +206,12 @@ func sessionMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 				request.reply <- result
 
 			case shStoreSession: // X
+				result := &TSession{sID: request.sid}
 				if data, ok := shList[request.sid]; ok {
-					go goStore(aSessionDir, request.sid, data)
+					result.sData = data
+					go goStore(aSessionDir, result)
 				}
-				request.reply <- &TSession{}
+				request.reply <- result
 
 			case shTerminate:
 				return
