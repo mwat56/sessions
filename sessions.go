@@ -209,30 +209,36 @@ func SIDname() string {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// Wrap initialises the session handling.
-//
-// `aHandler` responds to the actual HTTP request.
-//
-// `aSessionDir` is the name of the directory to store session files.
-func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
-	dir, err := filepath.Abs(aSessionDir)
-	if nil != err {
-		log.Fatalf("%s: %v", os.Args[0], err)
+// `checkSessionDir()` checks whether `aSessionDir` exists and
+// creates it of neccessary.
+func checkSessionDir(aSessionDir string) (rDir string, rErr error) {
+	if rDir, rErr = filepath.Abs(aSessionDir); nil != rErr {
+		return
 	}
-	if fi, err := os.Stat(dir); nil != err {
+	if fi, err := os.Stat(rDir); nil != err {
 		if e, ok := err.(*os.PathError); ok && e.Err == syscall.ENOENT {
 			fmode := os.ModeDir | 0775
-			if err := os.MkdirAll(filepath.FromSlash(dir), fmode); nil != err {
-				log.Fatalf("%s: %v", os.Args[0], err)
-			}
+			rErr = os.MkdirAll(filepath.FromSlash(rDir), fmode)
 		} else {
-			log.Fatalf("%s: %v", os.Args[0], err)
+			rErr = err
 		}
 	} else if !fi.IsDir() {
-		err = fmt.Errorf("Not a directory: %q", dir)
-		log.Fatalf("%s: %v", os.Args[0], err)
+		rErr = fmt.Errorf("Not a directory: %q", rDir)
 	}
-	go sessionMonitor(dir, chSession)
+
+	return
+} // checkSessionDir()
+
+// Wrap initialises the session handling.
+//
+//	`aHandler` responds to the actual HTTP request.
+//	`aSessionDir` is the name of the directory to store session files.
+func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
+	if dir, err := checkSessionDir(aSessionDir); nil != err {
+		log.Fatalf("%s: %v", os.Args[0], err)
+	} else {
+		go sessionMonitor(dir, chSession)
+	}
 
 	return http.HandlerFunc(
 		func(aWriter http.ResponseWriter, aRequest *http.Request) {
@@ -245,10 +251,13 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 			aRequest = aRequest.WithContext(ctx)
 
 			// load session file from disk
-			doRequest(sid, shLoadSession)
+			_Session := doRequest(sid, shLoadSession)
+
+			// keep a session reference with the writer
+			hr := &tHRefWriter{aWriter, _Session}
 
 			// the original handler can access the session now
-			aHandler.ServeHTTP(aWriter, aRequest)
+			aHandler.ServeHTTP(hr, aRequest)
 
 			// save the possibly updated session data
 			doRequest(sid, shStoreSession)
