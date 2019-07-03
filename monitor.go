@@ -34,7 +34,8 @@ const (
 	shChangeSession
 	shCloseSession
 	shDestroySession
-	shGetSession
+	shLoadSession
+	shNewSession
 	shStoreSession
 	shTerminate // for testing only: terminate `sessionMonitor()`
 )
@@ -182,7 +183,7 @@ func sessionMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 				go goRemove(aSessionDir, request.sid)
 				request.reply <- &TSession{}
 
-			case shGetSession: // XX
+			case shLoadSession: // XX
 				result := &TSession{
 					sID: request.sid,
 				}
@@ -192,6 +193,16 @@ func sessionMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 					result.sData = loadSession(aSessionDir, request.sid)
 					shList[request.sid] = result.sData
 				}
+				request.reply <- result
+
+			case shNewSession: // X
+				data := make(tSessionData, 16)
+				result := &TSession{
+					sID:   request.sid,
+					sData: &data,
+				}
+				shList[request.sid] = &data
+
 				request.reply <- result
 
 			case shStoreSession: // X

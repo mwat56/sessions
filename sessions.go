@@ -149,12 +149,17 @@ func GetSession(aRequest *http.Request) *TSession {
 		if id, ok := ctx.Value(sidName).(tSIDname); ok {
 			sid = string(id)
 		} else {
-			sid = newSID()
+			return doRequest(newSID(), shNewSession)
 		}
 	}
 
-	return doRequest(sid, shGetSession)
+	return doRequest(sid, shLoadSession)
 } // GetSession()
+
+// NewSession returns a new (empty) session.
+func NewSession() *TSession {
+	return doRequest(newSID(), shNewSession)
+} // NewSession()
 
 // `newSID()` returns an ID based on time and random bytes.
 func newSID() string {
@@ -238,7 +243,7 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 			aRequest = aRequest.WithContext(ctx)
 
 			// load session file from disk
-			doRequest(sid, shGetSession)
+			doRequest(sid, shLoadSession)
 
 			// the original handler can access the session now
 			aHandler.ServeHTTP(aWriter, aRequest)

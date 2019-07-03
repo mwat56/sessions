@@ -29,7 +29,7 @@ func Test_doRequest(t *testing.T) {
 		want int //*TSession
 	}{
 		// TODO: Add test cases.
-		{" 1", args{sid, shGetSession}, 0},
+		{" 1", args{sid, shLoadSession}, 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -56,3 +56,26 @@ func Test_newID(t *testing.T) {
 		})
 	}
 } // Test_newID()
+
+func TestNewSession(t *testing.T) {
+	sdir, _ := filepath.Abs("./sessions")
+	go sessionMonitor(sdir, chSession)
+	defer func() {
+		chSession <- tShRequest{req: shTerminate}
+	}()
+
+	tests := []struct {
+		name string
+		want int //*TSession
+	}{
+		// TODO: Add test cases.
+		{" 1", 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewSession(); got.Len() != tt.want {
+				t.Errorf("NewSession() = %v, want %v", got.Len(), tt.want)
+			}
+		})
+	}
+} // TestNewSession()
