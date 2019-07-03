@@ -17,7 +17,7 @@ func Test_doRequest(t *testing.T) {
 	defer func() {
 		chSession <- tShRequest{req: shTerminate}
 	}()
-	sid := "aTestSID"
+	sid := "aTestSID2"
 
 	type args struct {
 		aSID     string

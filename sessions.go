@@ -83,8 +83,10 @@ func (so *TSession) Len() int {
 //
 //	`aKey` The identifier to lookup.
 //	`aValue` The value to assign.
-func (so *TSession) Set(aKey string, aValue interface{}) {
+func (so *TSession) Set(aKey string, aValue interface{}) *TSession {
 	(*so.sData)[aKey] = aValue
+
+	return so
 } // Set()
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
