@@ -30,8 +30,11 @@ type (
 	}
 )
 
-// ChangeID generates a new SID for the current session's data.
-func (so *TSession) ChangeID() *TSession {
+// `changeID()` generates a new SID for the current session's data.
+//
+// Since the ID changes are handle internally by the `Wrap()` function
+// this method is not exported but kept private.
+func (so *TSession) changeID() *TSession {
 	result := doRequest(so.sID, shChangeSession)
 	so.sID = result.sID
 	so.sData = result.sData
@@ -253,8 +256,11 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 			// load session file from disk
 			_Session := doRequest(sid, shLoadSession)
 
+			// replace the old SID by a new ID
+			sid = _Session.changeID().ID()
+
 			// keep a session reference with the writer
-			hr := &tHRefWriter{aWriter, _Session}
+			hr := &tHRefWriter{aWriter, sid}
 
 			// the original handler can access the session now
 			aHandler.ServeHTTP(hr, aRequest)
