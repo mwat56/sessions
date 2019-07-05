@@ -14,18 +14,33 @@ import (
 )
 
 type (
-	// List of known sessions
+	// `tSessionData` stores the session data.
+	tSessionData map[string]interface{}
+
+	// `tShList` is the list of known sessions
 	tShList map[string]*tSessionData
 
-	// the kind of request to `sessionMonitor()`
+	// `tShLookupType` is the kind of request to `sessionMonitor()`
 	tShLookupType int
 
-	// the request structure transported to `sessionMonitor()`
+	// `tShRequest` is the request structure channeled to `sessionMonitor()`
 	tShRequest struct {
-		req   tShLookupType
-		sid   string
-		reply chan *TSession
+		rKey   string
+		rSID   string
+		rType  tShLookupType
+		rValue interface{}
+		reply  chan *TSession
 	}
+
+	// Structure to store the session data:
+	//
+	//	tStoreStruct{
+	//		"data":    tSessionData,
+	//		"expires": Unix.secs,
+	//		"sid":     aSID,
+	//	}
+	//
+	tStoreStruct map[string]interface{}
 )
 
 const (
@@ -33,9 +48,13 @@ const (
 	shNone = tShLookupType(1 << iota)
 	shChangeSession
 	shCloseSession
+	shDeleteKey
 	shDestroySession
+	shGetKey
 	shLoadSession
 	shNewSession
+	shSessionLen
+	shSetKey
 	shStoreSession
 	shTerminate // for testing only: terminate `sessionMonitor()`
 )
@@ -82,23 +101,23 @@ func goRemove(aSessionDir, aSID string) {
 // `goStore()` saves `aData` of `aSID` on disk.
 //
 //	`aSessionDir` The directory where the session files are stored.
-//	`aSession` The session whose data are to be stored.
-func goStore(aSessionDir string, aSession *TSession) {
+//	`aSID` the session ID of the datra to be stored.
+//	`aData` The session data to store.
+func goStore(aSessionDir string, aSID string, aData tSessionData) {
 	now := time.Now()
-	expireSec := now.Unix() + int64(sessionTTL) + 1
 	ss := tStoreStruct{
-		"data":    aSession.sData,
-		"expires": expireSec,
-		"sid":     aSession.sID,
+		"data":    aData,
+		"expires": now.Unix() + int64(sessionTTL) + 1,
+		"sid":     aSID,
 	}
-	gob.Register(aSession.sData)
+	gob.Register(aData)
 	gob.Register(now)
 	gob.Register(ss)
-	for _, val := range *aSession.sData {
+	for _, val := range aData {
 		gob.Register(val)
 	}
 
-	fName := filepath.Join(aSessionDir, aSession.sID) + ".sid"
+	fName := filepath.Join(aSessionDir, aSID) + ".sid"
 	file, err := os.OpenFile(fName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0664)
 	if nil != err {
 		return
@@ -123,7 +142,7 @@ func loadSession(aSessionDir, aSID string) *tSessionData {
 
 	var ss tStoreStruct
 	now := time.Now()
-	gob.Register(&sData)
+	gob.Register(sData)
 	gob.Register(now)
 	gob.Register(ss)
 	decoder := gob.NewDecoder(file)
@@ -135,8 +154,8 @@ func loadSession(aSessionDir, aSID string) *tSessionData {
 				if sid, ok := id.(string); ok &&
 					(sid == aSID) {
 					if d, ok := ss["data"]; ok {
-						if data, ok := d.(*tSessionData); ok {
-							return data
+						if data, ok := d.(tSessionData); ok {
+							return &data
 						}
 					}
 				}
@@ -150,68 +169,87 @@ func loadSession(aSessionDir, aSID string) *tSessionData {
 // `sessionMonitor()` handles the access to the internal list of session data.
 //
 //	`aSessionDir` The directory where the session files are stored.
+//	`aRequest` is the channel to receive request through.
 func sessionMonitor(aSessionDir string, aRequest <-chan tShRequest) {
-	shList := make(tShList, 32) // list of known/active sessions
-	timer := time.NewTimer(time.Duration(sessionTTL)*time.Second + 1)
+	shList := make(tShList, 32) // list of active sessions
+	timer := time.NewTimer(time.Duration(sessionTTL<<4)*time.Second + 1)
 	defer timer.Stop()
 
 	for { // wait for requests
 		select {
 		case request := <-aRequest:
-			switch request.req {
-			case shChangeSession: // X
+			switch request.rType {
+
+			case shChangeSession:
 				newsid := newSID()
 				result := TSession{sID: newsid}
-				if data, ok := shList[request.sid]; ok {
+				if data, ok := shList[request.rSID]; ok {
 					shList[newsid] = data
-					delete(shList, request.sid)
-					result.sData = data
+					delete(shList, request.rSID)
 				} else {
 					list := make(tSessionData)
 					shList[newsid] = &list
-					result.sData = &list
 				}
-				go goRemove(aSessionDir, request.sid)
+				go goRemove(aSessionDir, request.rSID)
 				request.reply <- &result
 
 			case shCloseSession:
 				go goGC(aSessionDir)
-				request.reply <- &TSession{sID: request.sid}
+				request.reply <- &TSession{sID: request.rSID}
 
-			case shDestroySession: // X
-				delete(shList, request.sid)
-				go goRemove(aSessionDir, request.sid)
+			case shDeleteKey:
+				if data, ok := shList[request.rSID]; ok {
+					delete(*data, request.rKey)
+				}
+				request.reply <- &TSession{sID: request.rSID}
+
+			case shDestroySession:
+				delete(shList, request.rSID)
+				go goRemove(aSessionDir, request.rSID)
 				request.reply <- &TSession{}
 
-			case shLoadSession: // XX
+			case shGetKey:
 				result := &TSession{
-					sID: request.sid,
+					sID: request.rSID,
 				}
-				if data, ok := shList[request.sid]; ok {
-					result.sData = data
-				} else {
-					result.sData = loadSession(aSessionDir, request.sid)
-					shList[request.sid] = result.sData
+				if data, ok := shList[request.rSID]; ok {
+					if val, ok := (*data)[request.rKey]; ok {
+						result.sValue = val
+					}
 				}
 				request.reply <- result
 
-			case shNewSession: // X
-				data := make(tSessionData, 16)
+			case shLoadSession:
 				result := &TSession{
-					sID:   request.sid,
-					sData: &data,
+					sID: request.rSID,
 				}
-				shList[request.sid] = &data
-
+				data, ok := shList[request.rSID]
+				if !ok {
+					data = loadSession(aSessionDir, request.rSID)
+				}
+				shList[request.rSID] = data
 				request.reply <- result
 
-			case shStoreSession: // X
-				result := &TSession{sID: request.sid}
-				if data, ok := shList[request.sid]; ok {
-					result.sData = data
-					go goStore(aSessionDir, result)
+			case shSessionLen:
+				result := &TSession{
+					sID: request.rSID,
+				}
+				if data, ok := shList[request.rSID]; ok {
+					result.sValue = len(*data)
 				}
 				request.reply <- result
+
+			case shSetKey:
+				if data, ok := shList[request.rSID]; ok {
+					(*data)[request.rKey] = request.rValue
+				}
+				request.reply <- &TSession{sID: request.rSID}
+
+			case shStoreSession:
+				if data, ok := shList[request.rSID]; ok {
+					go goStore(aSessionDir, request.rSID, *data)
+				}
+				request.reply <- &TSession{sID: request.rSID}
 
 			case shTerminate:
 				return
@@ -219,7 +257,7 @@ func sessionMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 
 		case <-timer.C:
 			go goGC(aSessionDir)
-			timer.Reset(time.Duration(sessionTTL)*time.Second + 1)
+			timer.Reset(time.Duration(sessionTTL<<4)*time.Second + 1)
 		} // select
 	} // for
 } // sessionMonitor()

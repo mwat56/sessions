@@ -16,34 +16,31 @@ func Test_goStore(t *testing.T) {
 	sdir, _ := filepath.Abs("./sessions")
 	sid := "aTestSID"
 	list := make(tSessionData)
-	s1 := &TSession{
-		sData: &list,
-		sID:   sid,
-	}
-	s1.Set("Zeichenkette", "eine Zeichenkette").
-		Set("Zahl", 123456789).
-		Set("Datum", time.Now())
+	list["Zeichenkette"] = "eine Zeichenkette"
+	list["Zahl"] = 123456789
+	list["Datum"] = time.Now()
 	type args struct {
 		aSessionDir string
-		aSession    *TSession
+		aSID        string
+		aData       tSessionData
 	}
 	tests := []struct {
 		name string
 		args args
 	}{
 		// TODO: Add test cases.
-		{" 1", args{sdir, s1}},
+		{" 1", args{sdir, sid, list}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			goStore(tt.args.aSessionDir, tt.args.aSession)
+			goStore(tt.args.aSessionDir, tt.args.aSID, tt.args.aData)
 		})
 	}
 } // Test_goStore()
 
 func Test_loadSession(t *testing.T) {
 	sdir, _ := filepath.Abs("./sessions")
-	sid := "aTestSID"
+	sid := initTestSession()
 	type args struct {
 		aSessionDir string
 		aSID        string
