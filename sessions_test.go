@@ -7,20 +7,20 @@
 package sessions
 
 import (
+	"reflect"
 	"testing"
 	"time"
 )
 
 func initTestSession() string {
 	sdir, _ := checkSessionDir("./sessions")
-	go sessionMonitor(sdir, chSession)
+	go goMonitor(sdir, chSession)
 	sid := "aTestSID"
 	session := doRequest(shLoadSession, sid, "", nil)
 	session.Set("Zeichenkette", "eine Zeichenkette").
 		Set("Zahl", 123456789).
 		Set("Datum", time.Now()).
 		Set("Real", 12345.6789)
-	// doRequest(shStoreSession, sid, "", nil)
 
 	return sid
 } // initTestSession()
@@ -31,26 +31,32 @@ func Test_doRequest(t *testing.T) {
 		chSession <- tShRequest{rType: shTerminate}
 	}()
 	sid2 := "aTestSID2"
-
+	w1 := &TSession{sID: sid}
+	w2 := &TSession{sID: sid2}
 	type args struct {
-		aRequest tShLookupType
-		aSID     string
-		aKey     string
-		aValue   interface{}
+		aType  tShLookupType
+		aSID   string
+		aKey   string
+		aValue interface{}
 	}
 	tests := []struct {
-		name string
-		args args
-		want int //*TSession
+		name         string
+		args         args
+		wantRSession *TSession
+		wantLen      int
 	}{
 		// TODO: Add test cases.
-		{" 1", args{shLoadSession, sid, "", nil}, 4},
-		{" 2", args{shLoadSession, sid2, "", nil}, 0},
+		{" 1", args{shLoadSession, sid, "", nil}, w1, 4},
+		{" 2", args{shLoadSession, sid2, "", nil}, w2, 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := doRequest(tt.args.aRequest, tt.args.aSID, tt.args.aKey, tt.args.aValue); got.Len() != tt.want {
-				t.Errorf("doRequest() = %v,\nwant %v", got.Len(), tt.want)
+			gotRSession := doRequest(tt.args.aType, tt.args.aSID, tt.args.aKey, tt.args.aValue)
+			if !reflect.DeepEqual(gotRSession, tt.wantRSession) {
+				t.Errorf("doRequest() = %v, want %v", gotRSession, tt.wantRSession)
+			}
+			if tt.wantLen != gotRSession.Len() {
+				t.Errorf("doRequest() = %v, want %v", gotRSession.Len(), tt.wantLen)
 			}
 		})
 	}
@@ -67,7 +73,7 @@ func TestTSession_Len(t *testing.T) {
 	w2 := 0
 	tests := []struct {
 		name   string
-		fields TSession // fields
+		fields TSession
 		want   int
 	}{
 		// TODO: Add test cases.
@@ -94,6 +100,8 @@ func Test_newID(t *testing.T) {
 	}{
 		// TODO: Add test cases.
 		{" 1", 32},
+		{" 2", 32},
+		{" 3", 32},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -103,27 +111,3 @@ func Test_newID(t *testing.T) {
 		})
 	}
 } // Test_newID()
-/*
-func TestNewSession(t *testing.T) {
-	sdir, _ := filepath.Abs("./sessions")
-	go sessionMonitor(sdir, chSession)
-	defer func() {
-		chSession <- tShRequest{rReq: shTerminate}
-	}()
-
-	tests := []struct {
-		name string
-		want int //*TSession
-	}{
-		// TODO: Add test cases.
-		{" 1", 0},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewSession(); got.Len() != tt.want {
-				t.Errorf("NewSession() = %v, want %v", got.Len(), tt.want)
-			}
-		})
-	}
-} // TestNewSession()
-*/

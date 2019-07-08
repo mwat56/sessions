@@ -18,15 +18,15 @@ Which is bad.
 _Cookies are bad_.
 
 In practice `cookies` are basically an invasion into the user's property (`cookies` claim disk space) and they are, by definition, kind of a surveillance and tracking tool.
-Nobody who has their user's best interesst in mind would ever even consider using `cookies`.
+Nobody who has their user's best interesst in mind would consider using `cookies`.
 Their only advantage is that they are easy to implement – which was kind of the point: ease of implementation.
-On the other hand the remote users were considered just a passive and obedient consumer – an expectation you can't really make in general:
+On the other hand the remote users were considered just a passive and obedient consumer – an essumption you can't really make in general:
 Since `cookies` are stored on the remote user's computer you don't really have control over that piece of data but instead the remote user's computer (which means the remote user) ultimately controls this data and thus can easily manipulate it.
 In other words: _`cookies` are inherently insecure_.
-It's clear that nowadays – with data security and the user's privacy in mind – using `cookies` is simply an unacceptable technique.
+It's clear that nowadays – with data security and the user's privacy in mind – using `cookies` is just an outdated technique.
 It's also clear that harvesting the user's facilities (including disk space and electricity) should be avoided.
 
-Another flaw you'll find in the literature about user sessions is the fact that it's often primarily considered in connetion with users who are in one way or another _logged in_ into the web-server.
+Another flaw you'll find in the literature about user sessions is the fact that it's often primarily considered in connetion with users who are in one way or another _logged in_ with the web-server.
 But that is only _one_ possible reason for considering some kind of session (data) store and – in my opinion – not even the most important one.
 Others may include a navigation history (e.g. breadcrumbs), configuration data, individual preferences, etc.
 In any case, session data should be able to transcent certain states of a user's connection.

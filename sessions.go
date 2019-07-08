@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -23,7 +24,7 @@ type (
 	// TSession is an opaque session data store.
 	TSession struct {
 		sID    string
-		sValue interface{} // used when requesting a data value
+		sValue interface{} // used only when requesting a data value
 	}
 )
 
@@ -245,11 +246,14 @@ func checkSessionDir(aSessionDir string) (rDir string, rErr error) {
 //	`aHandler` responds to the actual HTTP request.
 //	`aSessionDir` is the name of the directory to store session files.
 func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
-	if dir, err := checkSessionDir(aSessionDir); nil != err {
-		log.Fatalf("%s: %v", os.Args[0], err)
-	} else {
-		go sessionMonitor(dir, chSession)
-	}
+	var doOnce sync.Once
+	doOnce.Do(func() {
+		if dir, err := checkSessionDir(aSessionDir); nil != err {
+			log.Fatalf("%s: %v", os.Args[0], err)
+		} else {
+			go goMonitor(dir, chSession)
+		}
+	})
 
 	return http.HandlerFunc(
 		func(aWriter http.ResponseWriter, aRequest *http.Request) {
@@ -265,15 +269,15 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 				sid = newSID()
 			}
 
-			// prepare a reference for `GetSession()`
-			ctx := context.WithValue(aRequest.Context(), sidName, sid)
-			aRequest = aRequest.WithContext(ctx)
-
 			// load session file from disk
 			session := doRequest(shLoadSession, sid, "", nil)
 
 			// replace the old SID by a new ID
-			sid = session.changeID().ID()
+			sid = session.changeID().sID
+
+			// prepare a reference for `GetSession()`
+			ctx := context.WithValue(aRequest.Context(), sidName, sid)
+			aRequest = aRequest.WithContext(ctx)
 
 			// keep a session reference with the writer
 			hr := &tHRefWriter{aWriter, sid}

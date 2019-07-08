@@ -85,92 +85,11 @@ func goGC(aSessionDir string) {
 	}
 } // goGC()
 
-// `goRemove()` removes the session file.
-//
-//	`aSessionDir` The directory where the session files are stored.
-//	`aSID` The session ID being destroyed.
-func goRemove(aSessionDir, aSID string) {
-	fName := filepath.Join(aSessionDir, aSID) + ".sid"
-	if _, err := os.Stat(fName); nil != err {
-		return
-	}
-
-	os.Remove(fName)
-} // goRemove()
-
-// `goStore()` saves `aData` of `aSID` on disk.
-//
-//	`aSessionDir` The directory where the session files are stored.
-//	`aSID` the session ID of the datra to be stored.
-//	`aData` The session data to store.
-func goStore(aSessionDir string, aSID string, aData tSessionData) {
-	now := time.Now()
-	ss := tStoreStruct{
-		"data":    aData,
-		"expires": now.Unix() + int64(sessionTTL) + 1,
-		"sid":     aSID,
-	}
-	gob.Register(aData)
-	gob.Register(now)
-	gob.Register(ss)
-	for _, val := range aData {
-		gob.Register(val)
-	}
-
-	fName := filepath.Join(aSessionDir, aSID) + ".sid"
-	file, err := os.OpenFile(fName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0664)
-	if nil != err {
-		return
-	}
-	defer file.Close()
-
-	gob.NewEncoder(file).Encode(ss)
-} // goStore()
-
-// `loadSession()` reads the data for `aSID` from disk.
-//
-//	`aSessionDir` The directory where the session files are stored.
-//	`aSID` The session ID whose data are to be read from disk.
-func loadSession(aSessionDir, aSID string) *tSessionData {
-	sData := make(tSessionData)
-	fName := filepath.Join(aSessionDir, aSID) + ".sid"
-	file, err := os.OpenFile(fName, os.O_RDONLY, 0)
-	if nil != err {
-		return &sData
-	}
-	defer file.Close()
-
-	var ss tStoreStruct
-	now := time.Now()
-	gob.Register(sData)
-	gob.Register(now)
-	gob.Register(ss)
-	decoder := gob.NewDecoder(file)
-	err = decoder.Decode(&ss)
-	if e, ok := ss["expires"]; ok {
-		if expireSecs, ok := e.(int64); ok &&
-			time.Unix(expireSecs, 0).After(now) {
-			if id, ok := ss["sid"]; ok {
-				if sid, ok := id.(string); ok &&
-					(sid == aSID) {
-					if d, ok := ss["data"]; ok {
-						if data, ok := d.(tSessionData); ok {
-							return &data
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return &sData
-} // loadSession()
-
-// `sessionMonitor()` handles the access to the internal list of session data.
+// `goMonitor()` handles the access to the internal list of session data.
 //
 //	`aSessionDir` The directory where the session files are stored.
 //	`aRequest` is the channel to receive request through.
-func sessionMonitor(aSessionDir string, aRequest <-chan tShRequest) {
+func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 	shList := make(tShList, 32) // list of active sessions
 	timer := time.NewTimer(time.Duration(sessionTTL<<4)*time.Second + 1)
 	defer timer.Stop()
@@ -260,6 +179,87 @@ func sessionMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 			timer.Reset(time.Duration(sessionTTL<<4)*time.Second + 1)
 		} // select
 	} // for
-} // sessionMonitor()
+} // goMonitor()
+
+// `goRemove()` removes the session file.
+//
+//	`aSessionDir` The directory where the session files are stored.
+//	`aSID` The session ID being destroyed.
+func goRemove(aSessionDir, aSID string) {
+	fName := filepath.Join(aSessionDir, aSID) + ".sid"
+	if _, err := os.Stat(fName); nil != err {
+		return
+	}
+
+	os.Remove(fName)
+} // goRemove()
+
+// `goStore()` saves `aData` of `aSID` on disk.
+//
+//	`aSessionDir` The directory where the session files are stored.
+//	`aSID` the session ID of the datra to be stored.
+//	`aData` The session data to store.
+func goStore(aSessionDir string, aSID string, aData tSessionData) {
+	now := time.Now()
+	ss := tStoreStruct{
+		"data":    aData,
+		"expires": now.Unix() + int64(sessionTTL) + 1,
+		"sid":     aSID,
+	}
+	gob.Register(aData)
+	gob.Register(now)
+	gob.Register(ss)
+	for _, val := range aData {
+		gob.Register(val)
+	}
+
+	fName := filepath.Join(aSessionDir, aSID) + ".sid"
+	file, err := os.OpenFile(fName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0664)
+	if nil != err {
+		return
+	}
+	defer file.Close()
+
+	gob.NewEncoder(file).Encode(ss)
+} // goStore()
+
+// `loadSession()` reads the data for `aSID` from disk.
+//
+//	`aSessionDir` The directory where the session files are stored.
+//	`aSID` The session ID whose data are to be read from disk.
+func loadSession(aSessionDir, aSID string) *tSessionData {
+	sData := make(tSessionData)
+	fName := filepath.Join(aSessionDir, aSID) + ".sid"
+	file, err := os.OpenFile(fName, os.O_RDONLY, 0)
+	if nil != err {
+		return &sData
+	}
+	defer file.Close()
+
+	var ss tStoreStruct
+	now := time.Now()
+	gob.Register(sData)
+	gob.Register(now)
+	gob.Register(ss)
+	decoder := gob.NewDecoder(file)
+	err = decoder.Decode(&ss)
+	if e, ok := ss["expires"]; ok {
+		if expireSecs, ok := e.(int64); ok &&
+			time.Unix(expireSecs, 0).After(now) {
+			if id, ok := ss["sid"]; ok {
+				if sid, ok := id.(string); ok &&
+					(sid == aSID) {
+					if d, ok := ss["data"]; ok {
+						if data, ok := d.(tSessionData); ok {
+							return &data
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return &sData
+} // loadSession()
 
 /* _EoF_ */
