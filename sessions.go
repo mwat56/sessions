@@ -95,9 +95,9 @@ func (so *TSession) Set(aKey string, aValue interface{}) *TSession {
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 var (
-	// The channel to send requests through to `sessionMonitor()`
+	// The channel to send requests through to `goMonitor()`
 	// (`tShRequest` defined in `monitor.go`).
-	chSession = make(chan tShRequest, 64)
+	chSession = make(chan tShRequest, 2)
 )
 
 // `doRequest()` queries the session manager for certain data.
