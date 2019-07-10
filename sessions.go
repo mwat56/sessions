@@ -138,19 +138,12 @@ func GetSession(aRequest *http.Request) *TSession {
 		if id, ok := ctx.Value(sidName).(tSIDname); ok {
 			sid = string(id)
 		} else {
-			return doRequest(shNewSession, newSID(), "", nil)
+			sid = newSID()
 		}
 	}
 
 	return doRequest(shLoadSession, sid, "", nil)
 } // GetSession()
-
-/*
-// NewSession returns a new (empty) session.
-func NewSession() *TSession {
-	return doRequest(shNewSession, newSID(), "", nil)
-} // NewSession()
-*/
 
 // `newSID()` returns an ID based on time and random bytes.
 func newSID() string {

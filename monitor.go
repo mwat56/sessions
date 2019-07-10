@@ -47,12 +47,10 @@ const (
 	// The possible request types send to `sessionMonitor()`
 	shNone = tShLookupType(1 << iota)
 	shChangeSession
-	shCloseSession
 	shDeleteKey
 	shDestroySession
 	shGetKey
 	shLoadSession
-	shNewSession
 	shSessionLen
 	shSetKey
 	shStoreSession
@@ -111,10 +109,6 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 				}
 				go goRemove(aSessionDir, request.rSID)
 				request.reply <- &result
-
-			case shCloseSession:
-				go goGC(aSessionDir)
-				request.reply <- &TSession{sID: request.rSID}
 
 			case shDeleteKey:
 				if data, ok := shList[request.rSID]; ok {
