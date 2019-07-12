@@ -203,9 +203,6 @@ func goStore(aSessionDir string, aSID string, aData tSessionData) {
 	gob.Register(aData)
 	gob.Register(now)
 	gob.Register(ss)
-	for _, val := range aData {
-		gob.Register(val)
-	}
 
 	fName := filepath.Join(aSessionDir, aSID) + ".sid"
 	file, err := os.OpenFile(fName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0664)
