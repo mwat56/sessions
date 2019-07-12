@@ -21,6 +21,7 @@ func initTestSession() string {
 		Set("Zahl", 123456789).
 		Set("Datum", time.Now()).
 		Set("Real", 12345.6789)
+	doRequest(shStoreSession, sid, "", nil)
 
 	return sid
 } // initTestSession()
