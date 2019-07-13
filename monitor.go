@@ -99,7 +99,6 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 
 			case shChangeSession:
 				newsid := newSID()
-				result := TSession{sID: newsid}
 				if data, ok := shList[request.rSID]; ok {
 					shList[newsid] = data
 					delete(shList, request.rSID)
@@ -108,7 +107,7 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 					shList[newsid] = &list
 				}
 				go goRemove(aSessionDir, request.rSID)
-				request.reply <- &result
+				request.reply <- &TSession{sID: newsid}
 
 			case shDeleteKey:
 				if data, ok := shList[request.rSID]; ok {
@@ -133,15 +132,12 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 				request.reply <- result
 
 			case shLoadSession:
-				result := &TSession{
-					sID: request.rSID,
-				}
 				data, ok := shList[request.rSID]
 				if !ok {
 					data = loadSession(aSessionDir, request.rSID)
 				}
 				shList[request.rSID] = data
-				request.reply <- result
+				request.reply <- &TSession{sID: request.rSID}
 
 			case shSessionLen:
 				result := &TSession{
