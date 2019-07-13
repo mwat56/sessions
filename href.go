@@ -27,7 +27,7 @@ type (
 
 var (
 	// RegEx to match complete link tags
-	hrefRE = regexp.MustCompile(`(?si)(<a[^>]*href=")([^"]+)("[^>]*>)`)
+	hrefRE = regexp.MustCompile(`(?si)(<a[^>]*href=")([^"#]+)([^"]*"[^>]*>)`)
 
 	// lookup table for appending CGI argument
 	lookupCGIchar = tBoolLookup{true: "&", false: "?"}

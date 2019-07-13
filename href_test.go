@@ -22,8 +22,12 @@ func Test_tHRefWriter_appendSID(t *testing.T) {
 	w2 := d2
 	d3 := []byte(`Bla bla <a title="Link(3)" href="page3.html?k=v">Link(3)</a>`)
 	w3 := []byte(`Bla bla <a title="Link(3)" href="page3.html?k=v&` + string(sidName) + `=` + sid + `">Link(3)</a>`)
-	d4 := []byte(string(d1) + string(d2) + string(d3))
-	w4 := []byte(string(w1) + string(w2) + string(w3))
+
+	d4 := []byte(`Bla bla <a title="Link(4)" href="page4.html?k=v#fragment">Link(4)</a>`)
+	w4 := []byte(`Bla bla <a title="Link(4)" href="page4.html?k=v&` + string(sidName) + `=` + sid + `#fragment">Link(4)</a>`)
+
+	d5 := []byte(string(d1) + string(d2) + string(d3))
+	w5 := []byte(string(w1) + string(w2) + string(w3))
 	type args struct {
 		aData []byte
 	}
@@ -39,6 +43,7 @@ func Test_tHRefWriter_appendSID(t *testing.T) {
 		{" 2", h1, args{d2}, w2},
 		{" 3", h1, args{d3}, w3},
 		{" 4", h1, args{d4}, w4},
+		{" 5", h1, args{d5}, w5},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
