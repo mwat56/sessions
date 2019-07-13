@@ -33,7 +33,7 @@ type (
 // Since the ID changes are handle internally by the `Wrap()` function
 // this method is not exported but kept private.
 func (so *TSession) changeID() *TSession {
-	result := doRequest(shChangeSession, so.sID, "", nil)
+	result := so.request(shChangeSession, "", nil)
 	so.sID = result.sID
 
 	return so
@@ -43,7 +43,7 @@ func (so *TSession) changeID() *TSession {
 //
 //	`aKey` The identifier to lookup.
 func (so *TSession) Delete(aKey string) *TSession {
-	doRequest(shDeleteKey, so.sID, aKey, nil)
+	so.request(shDeleteKey, aKey, nil)
 
 	return so
 } // Delete()
@@ -52,7 +52,7 @@ func (so *TSession) Delete(aKey string) *TSession {
 //
 // All internal references and external session files are removed.
 func (so *TSession) Destroy() {
-	doRequest(shDestroySession, so.sID, "", nil)
+	so.request(shDestroySession, "", nil)
 	so.sID = ""
 } // Destroy()
 
@@ -62,7 +62,7 @@ func (so *TSession) Destroy() {
 //
 //	`aKey` The identifier to lookup.
 func (so *TSession) Get(aKey string) interface{} {
-	result := doRequest(shGetKey, so.sID, aKey, nil)
+	result := so.request(shGetKey, aKey, nil)
 
 	return result.sValue
 } // Get()
@@ -74,7 +74,7 @@ func (so *TSession) ID() string {
 
 // Len returns the current length of the list of session vars.
 func (so *TSession) Len() int {
-	result := doRequest(shSessionLen, so.sID, "", nil)
+	result := so.request(shSessionLen, "", nil)
 	if len, ok := result.sValue.(int); ok {
 		return len
 	}
@@ -82,12 +82,33 @@ func (so *TSession) Len() int {
 	return 0
 } // Len()
 
+// `request()` queries the session manager for certain data.
+//
+//	`aType` The lookup type.
+//	`aKey` Optional session variable name/key.
+//	`aValue` Optional session variable value.
+func (so *TSession) request(aType tShLookupType, aKey string, aValue interface{}) (rSession *TSession) {
+	answer := make(chan *TSession)
+	defer close(answer)
+
+	chSession <- tShRequest{
+		rKey:   aKey,
+		rSID:   so.sID,
+		rType:  aType,
+		rValue: aValue,
+		reply:  answer,
+	}
+	rSession = <-answer
+
+	return
+} // request()
+
 // Set adds/updates the session data of `aKey` with `aValue`.
 //
 //	`aKey` The identifier to lookup.
 //	`aValue` The value to assign.
 func (so *TSession) Set(aKey string, aValue interface{}) *TSession {
-	doRequest(shSetKey, so.sID, aKey, aValue)
+	so.request(shSetKey, aKey, aValue)
 
 	return so
 } // Set()
@@ -99,29 +120,6 @@ var (
 	// (`tShRequest` defined in `monitor.go`).
 	chSession = make(chan tShRequest, 2)
 )
-
-// `doRequest()` queries the session manager for certain data.
-//
-//	`aType` The lookup type.
-//	`aSID` The session ID to use for lookup.
-//	`aKey` Optional session variable name/key.
-//	`aValue` Optional session variable value.
-func doRequest(aType tShLookupType, aSID, aKey string, aValue interface{}) (rSession *TSession) {
-	answer := make(chan *TSession)
-	defer close(answer)
-
-	request := tShRequest{
-		rKey:   aKey,
-		rSID:   aSID,
-		rType:  aType,
-		rValue: aValue,
-		reply:  answer,
-	}
-	chSession <- request
-	rSession = <-answer
-
-	return
-} // doRequest()
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -141,8 +139,9 @@ func GetSession(aRequest *http.Request) *TSession {
 			sid = newSID()
 		}
 	}
+	so := &TSession{sID: sid}
 
-	return doRequest(shLoadSession, sid, "", nil)
+	return so.request(shLoadSession, "", nil)
 } // GetSession()
 
 // `newSID()` returns an ID based on time and random bytes.
@@ -263,7 +262,10 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 			}
 
 			// load session file from disk
-			session := doRequest(shLoadSession, sid, "", nil)
+			session := &TSession{
+				sID: sid,
+			}
+			session.request(shLoadSession, "", nil)
 
 			// replace the old SID by a new ID
 			sid = session.changeID().sID
@@ -279,7 +281,7 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 			aHandler.ServeHTTP(hr, aRequest)
 
 			// save the possibly updated session data
-			doRequest(shStoreSession, sid, "", nil)
+			session.request(shStoreSession, "", nil)
 		})
 } // Wrap()
 

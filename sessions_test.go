@@ -15,53 +15,58 @@ import (
 func initTestSession() string {
 	sdir, _ := checkSessionDir("./sessions")
 	go goMonitor(sdir, chSession)
-	sid := "aTestSID"
-	session := doRequest(shLoadSession, sid, "", nil)
-	session.Set("Zeichenkette", "eine Zeichenkette").
+	so := &TSession{
+		sID: "aTestSID",
+	}
+	so.request(shLoadSession, "", nil)
+	so.Set("Zeichenkette", "eine Zeichenkette").
 		Set("Zahl", 123456789).
 		Set("Datum", time.Now()).
 		Set("Real", 12345.6789)
-	doRequest(shStoreSession, sid, "", nil)
+	so.request(shStoreSession, "", nil)
 
-	return sid
+	return so.sID
 } // initTestSession()
 
-func Test_doRequest(t *testing.T) {
+func TestTSession_request(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
 		chSession <- tShRequest{rType: shTerminate}
 	}()
 	sid2 := "aTestSID2"
+	s1 := TSession{sID: sid}
 	w1 := &TSession{sID: sid}
+	s2 := TSession{sID: sid2}
 	w2 := &TSession{sID: sid2}
 	type args struct {
 		aType  tShLookupType
-		aSID   string
 		aKey   string
 		aValue interface{}
 	}
 	tests := []struct {
 		name         string
+		fields       TSession
 		args         args
 		wantRSession *TSession
 		wantLen      int
 	}{
 		// TODO: Add test cases.
-		{" 1", args{shLoadSession, sid, "", nil}, w1, 4},
-		{" 2", args{shLoadSession, sid2, "", nil}, w2, 0},
+		{" 1", s1, args{shLoadSession, "", nil}, w1, 4},
+		{" 2", s2, args{shLoadSession, "", nil}, w2, 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotRSession := doRequest(tt.args.aType, tt.args.aSID, tt.args.aKey, tt.args.aValue)
+			so := &tt.fields
+			gotRSession := so.request(tt.args.aType, tt.args.aKey, tt.args.aValue)
 			if !reflect.DeepEqual(gotRSession, tt.wantRSession) {
-				t.Errorf("doRequest() = %v, want %v", gotRSession, tt.wantRSession)
+				t.Errorf("TSession.request() = %v,\nwant %v", gotRSession, tt.wantRSession)
 			}
 			if tt.wantLen != gotRSession.Len() {
 				t.Errorf("doRequest() = %v, want %v", gotRSession.Len(), tt.wantLen)
 			}
 		})
 	}
-} // Test_doRequest()
+} // TestTSession_request()
 
 func TestTSession_Len(t *testing.T) {
 	sid := initTestSession()
