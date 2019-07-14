@@ -12,13 +12,13 @@
 
 ## Purpose / About
 
-I wanted a session data solution that's user-friendly including privacy-friendly.
+I wanted a session data solution that's user-friendly – including privacy-friendly.
 When doing some research about saving/retrieving sessions data with `Go` (aka `Golang`) you'll find some slightly different solutions which have, however, one detail in common: they all depend on socalled internet `cookies`.
 Which is bad.
 
 _Cookies are bad_.
 
-In practice `cookies` are basically an invasion into the user's property (`cookies` claim disk space) and they are, by definition, kind of a surveillance and tracking tool.
+In practice `cookies` are basically an invasion into the user's property (`cookies` claim disk space and require additional electricity for processing) and they are, by definition, kind of a surveillance and tracking tool.
 Nobody who has their user's best interesst in mind would consider using `cookies`.
 Their only advantage is that they are easy to implement – which was kind of the point: ease of implementation.
 On the other hand the remote users were considered just a passive and obedient consumer – an essumption you can't really make in general:
@@ -49,7 +49,7 @@ And it is by definition faster than any other system because every other databas
 While it can be challenging and interesting to figure out some smart database structure and sophisticated queries to access and retrieve data such an endeavour is often simply over-the-top.
 That's true especially for a job like session handling that has just two tasks to accomplish: point and grab (i.e. reading/loading data) and throw and forget (i.e. writing/storing data).
 
-So, in short: In wanted a system that's unintrusive (i.e. respecting the user's privacy) and doesn't depend on anything but what is there in any case (i.e. the filesystem).
+So, in short: I wanted a system that's as unintrusive as possible (i.e. respecting the user's privacy) and doesn't depend on anything but what is there in any case (i.e. the filesystem).
 And, of course, it should be easy to use by the developer.
 
 ## Installation
