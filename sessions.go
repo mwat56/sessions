@@ -67,6 +67,24 @@ func (so *TSession) Get(aKey string) interface{} {
 	return result.sValue
 } // Get()
 
+// GetBool returns the `boolean` session data identified by `aKey`.
+//
+// The second (`bool`) return value signals whether a session
+// value of type `bool` is associated with `aKey`.
+//
+// If `aKey` doesn't exist the method returns `false`
+// and `false`.
+//
+//	`aKey` The identifier to lookup.
+func (so *TSession) GetBool(aKey string) (bool, bool) {
+	result := so.request(shGetKey, aKey, nil)
+	if b, ok := result.sValue.(bool); ok {
+		return b, true
+	}
+
+	return false, false
+} // GetBool()
+
 // GetFloat returns the `float64` session data identified by `aKey`.
 //
 // The second (`bool`) return value signals whether a session
