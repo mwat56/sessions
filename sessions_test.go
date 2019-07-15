@@ -130,6 +130,9 @@ func TestTSession_GetString(t *testing.T) {
 	k2 := "Zeichenkette"
 	ws2 := "eine Zeichenkette"
 	wb2 := true
+	k3 := "Zahl"
+	ws3 := ""
+	wb3 := false
 	type args struct {
 		aKey string
 	}
@@ -143,13 +146,11 @@ func TestTSession_GetString(t *testing.T) {
 		// TODO: Add test cases.
 		{" 1", s1, args{k1}, ws1, wb1},
 		{" 2", s1, args{k2}, ws2, wb2},
+		{" 3", s1, args{k3}, ws3, wb3},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			so := &TSession{
-				sID:    tt.fields.sID,
-				sValue: tt.fields.sValue,
-			}
+			so := &tt.fields
 			got, got1 := so.GetString(tt.args.aKey)
 			if got != tt.want {
 				t.Errorf("TSession.GetString() got = %v, want %v", got, tt.want)
@@ -160,3 +161,47 @@ func TestTSession_GetString(t *testing.T) {
 		})
 	}
 } // TestTSession_GetString()
+
+func TestTSession_GetInt(t *testing.T) {
+	sid := initTestSession()
+	defer func() {
+		chSession <- tShRequest{rType: shTerminate}
+	}()
+	s1 := TSession{sID: sid}
+	k1 := "gibbet nich"
+	ws1 := 0
+	wb1 := false
+	k2 := "Zahl"
+	ws2 := 123456789
+	wb2 := true
+	k3 := "Zeichenkette"
+	ws3 := 0
+	wb3 := false
+	type args struct {
+		aKey string
+	}
+	tests := []struct {
+		name   string
+		fields TSession
+		args   args
+		want   int
+		want1  bool
+	}{
+		// TODO: Add test cases.
+		{" 1", s1, args{k1}, ws1, wb1},
+		{" 2", s1, args{k2}, ws2, wb2},
+		{" 3", s1, args{k3}, ws3, wb3},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			so := &tt.fields
+			got, got1 := so.GetInt(tt.args.aKey)
+			if got != tt.want {
+				t.Errorf("TSession.GetInt() got = %v, want %v", got, tt.want)
+			}
+			if got1 != tt.want1 {
+				t.Errorf("TSession.GetInt() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+} // TestTSession_GetInt()

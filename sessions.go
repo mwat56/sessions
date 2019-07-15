@@ -67,7 +67,28 @@ func (so *TSession) Get(aKey string) interface{} {
 	return result.sValue
 } // Get()
 
-// GetString returns the session data identified by `aKey`.
+// GetInt returns the `int` session data identified by `aKey`.
+//
+// The second (`bool`) return value signals whether a session
+// value of type `int` is associated with `aKey`.
+//
+// If `aKey` doesn't exist the method returns `0` (zero)
+// and `false`.
+//
+//	`aKey` The identifier to lookup.
+func (so *TSession) GetInt(aKey string) (int, bool) {
+	result := so.request(shGetKey, aKey, nil)
+	if i, ok := result.sValue.(int); ok {
+		return i, true
+	}
+
+	return 0, false
+} // GetInt()
+
+// GetString returns the `string` session data identified by `aKey`.
+//
+// The second (`bool`) return value signals whether a session
+// value of type `string` is associated with `aKey`.
 //
 // If `aKey` doesn't exist the method returns an empty string
 // and `false`.
