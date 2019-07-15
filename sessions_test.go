@@ -15,18 +15,20 @@ import (
 func initTestSession() string {
 	sdir, _ := checkSessionDir("./sessions")
 	go goMonitor(sdir, chSession)
+	sData := make(tSessionData)
+	sData["Datum"] = time.Now()
+	sData["Real"] = 12345.6789
+	sData["Wahr"] = true
+	sData["Zahl"] = 123456789
+	sData["Zeichenkette"] = "eine Zeichenkette"
+	sid := "aTestSID"
+	goStore(sdir, sid, sData)
 	so := &TSession{
-		sID: "aTestSID",
+		sID: sid,
 	}
 	so.request(shLoadSession, "", nil)
-	so.Set("Datum", time.Now()).
-		Set("Real", 12345.6789).
-		Set("Wahr", true).
-		Set("Zahl", 123456789).
-		Set("Zeichenkette", "eine Zeichenkette")
-	so.request(shStoreSession, "", nil)
 
-	return so.sID
+	return sid
 } // initTestSession()
 
 func Test_newID(t *testing.T) {
@@ -67,7 +69,7 @@ func TestTSession_GetBool(t *testing.T) {
 		// TODO: Add test cases.
 		{" 1", s1, args{"gibbet nich"}, false, false},
 		{" 2", s1, args{"Real"}, false, false},
-		{" 3", s1, args{"Wahr"}, true, false},
+		{" 3", s1, args{"Wahr"}, true, true},
 		{" 4", s1, args{"Zahl"}, false, false},
 		{" 5", s1, args{"Zeichenkette"}, false, false},
 	}
