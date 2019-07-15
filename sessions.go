@@ -145,6 +145,23 @@ func (so *TSession) GetString(aKey string) (string, bool) {
 	return "", false
 } // GetString()
 
+// GetTime returns the `time.Time` session data identified by `aKey`.
+//
+// The second (`bool`) return value signals whether a session
+// value of type `time.Time` is associated with `aKey`.
+//
+// If `aKey` doesn't exist the method returns a zero time and `false`.
+//
+//	`aKey` The identifier to lookup.
+func (so *TSession) GetTime(aKey string) (rTime time.Time, rOK bool) {
+	result := so.request(shGetKey, aKey, nil)
+	if t, ok := result.sValue.(time.Time); ok {
+		rTime, rOK = t, true
+	}
+
+	return
+} // GetTime()
+
 // ID returns the session's ID.
 func (so *TSession) ID() string {
 	return so.sID

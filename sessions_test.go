@@ -204,6 +204,50 @@ func TestTSession_GetString(t *testing.T) {
 	}
 } // TestTSession_GetString()
 
+func TestTSession_GetTime(t *testing.T) {
+	sid := initTestSession()
+	defer func() {
+		chSession <- tShRequest{rType: shTerminate}
+	}()
+	s1 := TSession{sID: sid}
+	var zero time.Time
+	now := time.Now()
+	s1.Set("Datum", now)
+	type args struct {
+		aKey string
+	}
+	tests := []struct {
+		name      string
+		fields    TSession
+		args      args
+		wantRTime time.Time
+		wantROK   bool
+	}{
+		// TODO: Add test cases.
+		{" 1", s1, args{"gibbet nich"}, zero, false},
+		{" 2", s1, args{"Real"}, zero, false},
+		{" 3", s1, args{"Wahr"}, zero, false},
+		{" 4", s1, args{"Zahl"}, zero, false},
+		{" 5", s1, args{"Zeichenkette"}, zero, false},
+		{" 6", s1, args{"Datum"}, now, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			so := &TSession{
+				sID:    tt.fields.sID,
+				sValue: tt.fields.sValue,
+			}
+			gotRTime, gotROK := so.GetTime(tt.args.aKey)
+			if !reflect.DeepEqual(gotRTime, tt.wantRTime) {
+				t.Errorf("TSession.GetTime() gotRTime = %v, want %v", gotRTime, tt.wantRTime)
+			}
+			if gotROK != tt.wantROK {
+				t.Errorf("TSession.GetTime() gotROK = %v, want %v", gotROK, tt.wantROK)
+			}
+		})
+	}
+} // TestTSession_GetTime()
+
 func TestTSession_Len(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
