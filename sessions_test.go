@@ -22,7 +22,8 @@ func initTestSession() string {
 	so.Set("Zeichenkette", "eine Zeichenkette").
 		Set("Zahl", 123456789).
 		Set("Datum", time.Now()).
-		Set("Real", 12345.6789)
+		Set("Real", 12345.6789).
+		Set("Wahr", true)
 	so.request(shStoreSession, "", nil)
 
 	return so.sID
@@ -51,7 +52,7 @@ func TestTSession_request(t *testing.T) {
 		wantLen      int
 	}{
 		// TODO: Add test cases.
-		{" 1", s1, args{shLoadSession, "", nil}, w1, 4},
+		{" 1", s1, args{shLoadSession, "", nil}, w1, 5},
 		{" 2", s2, args{shLoadSession, "", nil}, w2, 0},
 	}
 	for _, tt := range tests {
@@ -74,7 +75,7 @@ func TestTSession_Len(t *testing.T) {
 		chSession <- tShRequest{rType: shTerminate}
 	}()
 	s1 := TSession{sID: sid}
-	w1 := 4
+	w1 := 5
 	s2 := TSession{sID: "aTestSID2"}
 	w2 := 0
 	tests := []struct {
@@ -169,14 +170,8 @@ func TestTSession_GetInt(t *testing.T) {
 	}()
 	s1 := TSession{sID: sid}
 	k1 := "gibbet nich"
-	ws1 := 0
-	wb1 := false
 	k2 := "Zahl"
-	ws2 := 123456789
-	wb2 := true
 	k3 := "Zeichenkette"
-	ws3 := 0
-	wb3 := false
 	type args struct {
 		aKey string
 	}
@@ -184,13 +179,13 @@ func TestTSession_GetInt(t *testing.T) {
 		name   string
 		fields TSession
 		args   args
-		want   int
+		want   int64
 		want1  bool
 	}{
 		// TODO: Add test cases.
-		{" 1", s1, args{k1}, ws1, wb1},
-		{" 2", s1, args{k2}, ws2, wb2},
-		{" 3", s1, args{k3}, ws3, wb3},
+		{" 1", s1, args{k1}, 0, false},
+		{" 2", s1, args{k2}, 123456789, true},
+		{" 3", s1, args{k3}, 0, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -205,3 +200,58 @@ func TestTSession_GetInt(t *testing.T) {
 		})
 	}
 } // TestTSession_GetInt()
+
+func TestTSession_GetFloat(t *testing.T) {
+	sid := initTestSession()
+	defer func() {
+		chSession <- tShRequest{rType: shTerminate}
+	}()
+	s1 := TSession{sID: sid}
+	k1 := "gibbet nich"
+	ws1 := float64(0)
+	wb1 := false
+	k2 := "Real"
+	ws2 := 12345.6789
+	wb2 := true
+	k3 := "Zeichenkette"
+	ws3 := float64(0)
+	wb3 := false
+	k4 := "Zahl"
+	ws4 := float64(0)
+	wb4 := false
+	type fields struct {
+		sID    string
+		sValue interface{}
+	}
+	type args struct {
+		aKey string
+	}
+	tests := []struct {
+		name   string
+		fields TSession
+		args   args
+		want   float64
+		want1  bool
+	}{
+		// TODO: Add test cases.
+		{" 1", s1, args{k1}, ws1, wb1},
+		{" 2", s1, args{k2}, ws2, wb2},
+		{" 3", s1, args{k3}, ws3, wb3},
+		{" 4", s1, args{k4}, ws4, wb4},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			so := &TSession{
+				sID:    tt.fields.sID,
+				sValue: tt.fields.sValue,
+			}
+			got, got1 := so.GetFloat(tt.args.aKey)
+			if got != tt.want {
+				t.Errorf("TSession.GetFloat() got = %v, want %v", got, tt.want)
+			}
+			if got1 != tt.want1 {
+				t.Errorf("TSession.GetFloat() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+} // TestTSession_GetFloat()

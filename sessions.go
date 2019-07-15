@@ -67,6 +67,27 @@ func (so *TSession) Get(aKey string) interface{} {
 	return result.sValue
 } // Get()
 
+// GetFloat returns the `float64` session data identified by `aKey`.
+//
+// The second (`bool`) return value signals whether a session
+// value of type `float64` is associated with `aKey`.
+//
+// If `aKey` doesn't exist the method returns `0` (zero)
+// and `false`.
+//
+//	`aKey` The identifier to lookup.
+func (so *TSession) GetFloat(aKey string) (float64, bool) {
+	result := so.request(shGetKey, aKey, nil)
+	if f, ok := result.sValue.(float64); ok {
+		return f, true
+	}
+	if f, ok := result.sValue.(float32); ok {
+		return float64(f), true
+	}
+
+	return 0, false
+} // GetFloat()
+
 // GetInt returns the `int` session data identified by `aKey`.
 //
 // The second (`bool`) return value signals whether a session
@@ -76,10 +97,13 @@ func (so *TSession) Get(aKey string) interface{} {
 // and `false`.
 //
 //	`aKey` The identifier to lookup.
-func (so *TSession) GetInt(aKey string) (int, bool) {
+func (so *TSession) GetInt(aKey string) (int64, bool) {
 	result := so.request(shGetKey, aKey, nil)
-	if i, ok := result.sValue.(int); ok {
+	if i, ok := result.sValue.(int64); ok {
 		return i, true
+	}
+	if i, ok := result.sValue.(int); ok {
+		return int64(i), true
 	}
 
 	return 0, false
