@@ -117,3 +117,46 @@ func Test_newID(t *testing.T) {
 		})
 	}
 } // Test_newID()
+
+func TestTSession_GetString(t *testing.T) {
+	sid := initTestSession()
+	defer func() {
+		chSession <- tShRequest{rType: shTerminate}
+	}()
+	s1 := TSession{sID: sid}
+	k1 := "gibbet nich"
+	ws1 := ""
+	wb1 := false
+	k2 := "Zeichenkette"
+	ws2 := "eine Zeichenkette"
+	wb2 := true
+	type args struct {
+		aKey string
+	}
+	tests := []struct {
+		name   string
+		fields TSession
+		args   args
+		want   string
+		want1  bool
+	}{
+		// TODO: Add test cases.
+		{" 1", s1, args{k1}, ws1, wb1},
+		{" 2", s1, args{k2}, ws2, wb2},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			so := &TSession{
+				sID:    tt.fields.sID,
+				sValue: tt.fields.sValue,
+			}
+			got, got1 := so.GetString(tt.args.aKey)
+			if got != tt.want {
+				t.Errorf("TSession.GetString() got = %v, want %v", got, tt.want)
+			}
+			if got1 != tt.want1 {
+				t.Errorf("TSession.GetString() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+} // TestTSession_GetString()

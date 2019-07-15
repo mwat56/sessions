@@ -67,6 +67,21 @@ func (so *TSession) Get(aKey string) interface{} {
 	return result.sValue
 } // Get()
 
+// GetString returns the session data identified by `aKey`.
+//
+// If `aKey` doesn't exist the method returns an empty string
+// and `false`.
+//
+//	`aKey` The identifier to lookup.
+func (so *TSession) GetString(aKey string) (string, bool) {
+	result := so.request(shGetKey, aKey, nil)
+	if str, ok := result.sValue.(string); ok {
+		return str, true
+	}
+
+	return "", false
+} // GetString()
+
 // ID returns the session's ID.
 func (so *TSession) ID() string {
 	return so.sID
@@ -256,26 +271,28 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 				}
 			}()
 
-			sid := aRequest.FormValue(string(sidName))
-			if 0 == len(sid) {
-				sid = newSID()
+			session := &TSession{
+				sID: aRequest.FormValue(string(sidName)),
+			}
+			if 0 == len(session.sID) {
+				session.sID = newSID()
 			}
 
 			// load session file from disk
-			session := &TSession{
-				sID: sid,
-			}
 			session.request(shLoadSession, "", nil)
 
 			// replace the old SID by a new ID
-			sid = session.changeID().sID
+			session.changeID()
 
 			// prepare a reference for `GetSession()`
-			ctx := context.WithValue(aRequest.Context(), sidName, sid)
+			ctx := context.WithValue(aRequest.Context(), sidName, session.sID)
 			aRequest = aRequest.WithContext(ctx)
 
 			// keep a session reference with the writer
-			hr := &tHRefWriter{aWriter, sid}
+			hr := &tHRefWriter{
+				aWriter,
+				session.sID,
+			}
 
 			// the original handler can access the session now
 			aHandler.ServeHTTP(hr, aRequest)
