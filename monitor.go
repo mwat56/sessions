@@ -94,7 +94,10 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 
 	for { // wait for requests
 		select {
-		case request := <-aRequest:
+		case request, more := <-aRequest:
+			if !more { // channel closed
+				return
+			}
 			switch request.rType {
 
 			case shChangeSession:

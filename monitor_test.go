@@ -51,7 +51,7 @@ func Test_loadSession(t *testing.T) {
 		want int //*tSessionData
 	}{
 		// TODO: Add test cases.
-		{" 1", args{sdir, sid}, 3},
+		{" 1", args{sdir, sid}, 5},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
