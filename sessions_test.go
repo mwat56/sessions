@@ -195,10 +195,10 @@ func TestTSession_GetString(t *testing.T) {
 			so := &tt.fields
 			got, got1 := so.GetString(tt.args.aKey)
 			if got != tt.want {
-				t.Errorf("TSession.GetString() got = %v, want %v", got, tt.want)
+				t.Errorf("TSession.GetString() got = %v,\nwant %v", got, tt.want)
 			}
 			if got1 != tt.want1 {
-				t.Errorf("TSession.GetString() got1 = %v, want %v", got1, tt.want1)
+				t.Errorf("TSession.GetString() got1 = %v,\nwant %v", got1, tt.want1)
 			}
 		})
 	}
@@ -239,10 +239,10 @@ func TestTSession_GetTime(t *testing.T) {
 			}
 			gotRTime, gotROK := so.GetTime(tt.args.aKey)
 			if !reflect.DeepEqual(gotRTime, tt.wantRTime) {
-				t.Errorf("TSession.GetTime() gotRTime = %v, want %v", gotRTime, tt.wantRTime)
+				t.Errorf("TSession.GetTime() gotRTime = %v,\nwant %v", gotRTime, tt.wantRTime)
 			}
 			if gotROK != tt.wantROK {
-				t.Errorf("TSession.GetTime() gotROK = %v, want %v", gotROK, tt.wantROK)
+				t.Errorf("TSession.GetTime() gotROK = %v,\nwant %v", gotROK, tt.wantROK)
 			}
 		})
 	}

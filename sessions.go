@@ -349,15 +349,15 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 				session := &TSession{
 					sID: aRequest.FormValue(string(sidName)),
 				}
-				if 0 == len(session.sID) {
+				if 0 < len(session.sID) {
+					// load session file from disk
+					session.request(shLoadSession, "", nil)
+
+					// replace the old SID by a new ID
+					session.changeID()
+				} else {
 					session.sID = newSID()
 				}
-
-				// load session file from disk
-				session.request(shLoadSession, "", nil)
-
-				// replace the old SID by a new ID
-				session.changeID()
 
 				// prepare a reference for `GetSession()`
 				ctx := context.WithValue(aRequest.Context(), sidName, session.sID)
