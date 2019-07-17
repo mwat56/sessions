@@ -12,7 +12,10 @@ import (
 )
 
 func Test_tHRefWriter_appendSID(t *testing.T) {
-	sid := "aTestSIDvalue"
+	sid := initTestSession()
+	defer func() {
+		chSession <- tShRequest{rType: smTerminate}
+	}()
 	h1 := tHRefWriter{sID: sid}
 	d0 := []byte(`bla bla bla`)
 	w0 := d0

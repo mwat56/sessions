@@ -26,7 +26,7 @@ func initTestSession() string {
 	so := &TSession{
 		sID: sid,
 	}
-	so.request(shLoadSession, "", nil)
+	so.request(smLoadSession, "", nil)
 
 	return sid
 } // initTestSession()
@@ -53,7 +53,7 @@ func Test_newID(t *testing.T) {
 func TestTSession_GetBool(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
-		chSession <- tShRequest{rType: shTerminate}
+		chSession <- tShRequest{rType: smTerminate}
 	}()
 	s1 := TSession{sID: sid}
 	type args struct {
@@ -93,7 +93,7 @@ func TestTSession_GetBool(t *testing.T) {
 func TestTSession_GetFloat(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
-		chSession <- tShRequest{rType: shTerminate}
+		chSession <- tShRequest{rType: smTerminate}
 	}()
 	s1 := TSession{sID: sid}
 	type args struct {
@@ -133,7 +133,7 @@ func TestTSession_GetFloat(t *testing.T) {
 func TestTSession_GetInt(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
-		chSession <- tShRequest{rType: shTerminate}
+		chSession <- tShRequest{rType: smTerminate}
 	}()
 	s1 := TSession{sID: sid}
 	type args struct {
@@ -170,7 +170,7 @@ func TestTSession_GetInt(t *testing.T) {
 func TestTSession_GetString(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
-		chSession <- tShRequest{rType: shTerminate}
+		chSession <- tShRequest{rType: smTerminate}
 	}()
 	s1 := TSession{sID: sid}
 	type args struct {
@@ -207,7 +207,7 @@ func TestTSession_GetString(t *testing.T) {
 func TestTSession_GetTime(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
-		chSession <- tShRequest{rType: shTerminate}
+		chSession <- tShRequest{rType: smTerminate}
 	}()
 	s1 := TSession{sID: sid}
 	var zero time.Time
@@ -251,7 +251,7 @@ func TestTSession_GetTime(t *testing.T) {
 func TestTSession_Len(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
-		chSession <- tShRequest{rType: shTerminate}
+		chSession <- tShRequest{rType: smTerminate}
 	}()
 	s1 := TSession{sID: sid}
 	w1 := 5
@@ -282,7 +282,7 @@ func TestTSession_Len(t *testing.T) {
 func TestTSession_request(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
-		chSession <- tShRequest{rType: shTerminate}
+		chSession <- tShRequest{rType: smTerminate}
 	}()
 	sid2 := "aTestSID2"
 	s1 := TSession{sID: sid}
@@ -302,8 +302,8 @@ func TestTSession_request(t *testing.T) {
 		wantLen      int
 	}{
 		// TODO: Add test cases.
-		{" 1", s1, args{shLoadSession, "", nil}, w1, 5},
-		{" 2", s2, args{shLoadSession, "", nil}, w2, 0},
+		{" 1", s1, args{smLoadSession, "", nil}, w1, 5},
+		{" 2", s2, args{smLoadSession, "", nil}, w2, 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

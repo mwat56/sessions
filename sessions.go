@@ -33,7 +33,7 @@ type (
 // Since the ID changes are handle internally by the `Wrap()` function
 // this method is not exported but kept private.
 func (so *TSession) changeID() *TSession {
-	result := so.request(shChangeSession, "", nil)
+	result := so.request(smChangeSession, "", nil)
 	so.sID = result.sID
 
 	return so
@@ -43,7 +43,7 @@ func (so *TSession) changeID() *TSession {
 //
 //	`aKey` The identifier to lookup.
 func (so *TSession) Delete(aKey string) *TSession {
-	so.request(shDeleteKey, aKey, nil)
+	so.request(smDeleteKey, aKey, nil)
 
 	return so
 } // Delete()
@@ -52,13 +52,13 @@ func (so *TSession) Delete(aKey string) *TSession {
 //
 // All internal references and external session files are removed.
 func (so *TSession) Destroy() {
-	so.request(shDestroySession, "", nil)
+	so.request(smDestroySession, "", nil)
 	so.sID = ""
 } // Destroy()
 
 // EmptySession returns whether the current session has no associated data.
 func (so *TSession) EmptySession() bool {
-	result := so.request(shEmptySession, "", nil)
+	result := so.request(smEmptySession, "", nil)
 	if b, ok := result.sValue.(bool); ok {
 		return b
 	}
@@ -72,7 +72,7 @@ func (so *TSession) EmptySession() bool {
 //
 //	`aKey` The identifier to lookup.
 func (so *TSession) Get(aKey string) interface{} {
-	result := so.request(shGetKey, aKey, nil)
+	result := so.request(smGetKey, aKey, nil)
 
 	return result.sValue
 } // Get()
@@ -87,7 +87,7 @@ func (so *TSession) Get(aKey string) interface{} {
 //
 //	`aKey` The identifier to lookup.
 func (so *TSession) GetBool(aKey string) (bool, bool) {
-	result := so.request(shGetKey, aKey, nil)
+	result := so.request(smGetKey, aKey, nil)
 	if b, ok := result.sValue.(bool); ok {
 		return b, true
 	}
@@ -105,7 +105,7 @@ func (so *TSession) GetBool(aKey string) (bool, bool) {
 //
 //	`aKey` The identifier to lookup.
 func (so *TSession) GetFloat(aKey string) (float64, bool) {
-	result := so.request(shGetKey, aKey, nil)
+	result := so.request(smGetKey, aKey, nil)
 	if f, ok := result.sValue.(float64); ok {
 		return f, true
 	}
@@ -126,7 +126,7 @@ func (so *TSession) GetFloat(aKey string) (float64, bool) {
 //
 //	`aKey` The identifier to lookup.
 func (so *TSession) GetInt(aKey string) (int64, bool) {
-	result := so.request(shGetKey, aKey, nil)
+	result := so.request(smGetKey, aKey, nil)
 	if i, ok := result.sValue.(int64); ok {
 		return i, true
 	}
@@ -147,7 +147,7 @@ func (so *TSession) GetInt(aKey string) (int64, bool) {
 //
 //	`aKey` The identifier to lookup.
 func (so *TSession) GetString(aKey string) (string, bool) {
-	result := so.request(shGetKey, aKey, nil)
+	result := so.request(smGetKey, aKey, nil)
 	if str, ok := result.sValue.(string); ok {
 		return str, true
 	}
@@ -164,7 +164,7 @@ func (so *TSession) GetString(aKey string) (string, bool) {
 //
 //	`aKey` The identifier to lookup.
 func (so *TSession) GetTime(aKey string) (rTime time.Time, rOK bool) {
-	result := so.request(shGetKey, aKey, nil)
+	result := so.request(smGetKey, aKey, nil)
 	if t, ok := result.sValue.(time.Time); ok {
 		rTime, rOK = t, true
 	}
@@ -179,7 +179,7 @@ func (so *TSession) ID() string {
 
 // Len returns the current length of the list of session vars.
 func (so *TSession) Len() int {
-	result := so.request(shSessionLen, "", nil)
+	result := so.request(smSessionLen, "", nil)
 	if len, ok := result.sValue.(int); ok {
 		return len
 	}
@@ -213,7 +213,7 @@ func (so *TSession) request(aType tShLookupType, aKey string, aValue interface{}
 //	`aKey` The identifier to lookup.
 //	`aValue` The value to assign.
 func (so *TSession) Set(aKey string, aValue interface{}) *TSession {
-	so.request(shSetKey, aKey, aValue)
+	so.request(smSetKey, aKey, aValue)
 
 	return so
 } // Set()
@@ -246,7 +246,7 @@ func GetSession(aRequest *http.Request) *TSession {
 	}
 	so := &TSession{sID: sid}
 
-	return so.request(shLoadSession, "", nil)
+	return so.request(smLoadSession, "", nil)
 } // GetSession()
 
 // `newSID()` returns an ID based on time and random bytes.
@@ -361,7 +361,7 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 				}
 				if 0 < len(session.sID) {
 					// load session file from disk
-					session.request(shLoadSession, "", nil)
+					session.request(smLoadSession, "", nil)
 
 					// replace the old SID by a new ID
 					session.changeID()
@@ -383,7 +383,7 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 				aHandler.ServeHTTP(hr, aRequest)
 
 				// save the possibly updated session data
-				session.request(shStoreSession, "", nil)
+				session.request(smStoreSession, "", nil)
 
 			default:
 				// run the original handler

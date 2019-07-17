@@ -45,17 +45,17 @@ type (
 
 const (
 	// The possible request types send to `goMonitor()`
-	shNone = tShLookupType(1 << iota)
-	shChangeSession
-	shDeleteKey
-	shDestroySession
-	shEmptySession
-	shGetKey
-	shLoadSession
-	shSessionLen
-	shSetKey
-	shStoreSession
-	shTerminate // for testing only: terminate `goMonitor()`
+	smNone = tShLookupType(1 << iota)
+	smChangeSession
+	smDeleteKey
+	smDestroySession
+	smEmptySession
+	smGetKey
+	smLoadSession
+	smSessionLen
+	smSetKey
+	smStoreSession
+	smTerminate // for testing only: terminate `goMonitor()`
 )
 
 // `goDel()` deletes the file and session data for `aSID`.
@@ -70,7 +70,7 @@ func goDel(aSID string) {
 
 	chSession <- tShRequest{
 		rSID:  aSID,
-		rType: shDestroySession,
+		rType: smDestroySession,
 		reply: answer,
 	}
 	<-answer
@@ -119,7 +119,7 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 			}
 			switch request.rType {
 
-			case shChangeSession:
+			case smChangeSession:
 				newsid := newSID()
 				if data, ok := shList[request.rSID]; ok {
 					shList[newsid] = data
@@ -131,25 +131,25 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 				go goRemove(aSessionDir, request.rSID)
 				request.reply <- &TSession{sID: newsid}
 
-			case shDeleteKey:
+			case smDeleteKey:
 				if data, ok := shList[request.rSID]; ok {
 					delete(*data, request.rKey)
 				}
 				request.reply <- &TSession{sID: request.rSID}
 
-			case shDestroySession:
+			case smDestroySession:
 				delete(shList, request.rSID)
 				go goRemove(aSessionDir, request.rSID)
 				request.reply <- &TSession{}
 
-			case shEmptySession:
+			case smEmptySession:
 				_, ok := shList[request.rSID]
 				request.reply <- &TSession{
 					sID:    request.rSID,
 					sValue: (!ok),
 				}
 
-			case shGetKey:
+			case smGetKey:
 				result := &TSession{
 					sID: request.rSID,
 				}
@@ -160,7 +160,7 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 				}
 				request.reply <- result
 
-			case shLoadSession:
+			case smLoadSession:
 				data, ok := shList[request.rSID]
 				if !ok {
 					data = loadSession(aSessionDir, request.rSID)
@@ -168,7 +168,7 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 				shList[request.rSID] = data
 				request.reply <- &TSession{sID: request.rSID}
 
-			case shSessionLen:
+			case smSessionLen:
 				result := &TSession{
 					sID: request.rSID,
 				}
@@ -177,19 +177,19 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 				}
 				request.reply <- result
 
-			case shSetKey:
+			case smSetKey:
 				if data, ok := shList[request.rSID]; ok {
 					(*data)[request.rKey] = request.rValue
 				}
 				request.reply <- &TSession{sID: request.rSID}
 
-			case shStoreSession:
+			case smStoreSession:
 				if data, ok := shList[request.rSID]; ok {
 					go goStore(aSessionDir, request.rSID, *data)
 				}
 				request.reply <- &TSession{sID: request.rSID}
 
-			case shTerminate:
+			case smTerminate:
 				return
 			} // switch
 
