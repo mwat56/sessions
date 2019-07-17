@@ -86,9 +86,10 @@ func goGC(aSessionDir string) {
 // `goMonitor()` handles the access to the internal list of session data.
 //
 //	`aSessionDir` The directory where the session files are stored.
-//	`aRequest` is the channel to receive request through.
+//	`aRequest` The channel to receive request through.
 func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 	shList := make(tShList, 32) // list of active sessions
+	go goGC(aSessionDir)        // cleanup old session files
 	timer := time.NewTimer(time.Duration(sessionTTL<<4)*time.Second + 1)
 	defer timer.Stop()
 
