@@ -37,6 +37,10 @@ var (
 //
 // `aData` The web/http response.
 func (hr *tHRefWriter) appendSID(aData []byte) []byte {
+	so := &TSession{sID: hr.sID}
+	if so.EmptySession() {
+		return aData
+	}
 	linkMatches := hrefRE.FindAllSubmatch(aData, -1)
 	if nil == linkMatches {
 		return aData

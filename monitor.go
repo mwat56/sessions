@@ -49,6 +49,7 @@ const (
 	shChangeSession
 	shDeleteKey
 	shDestroySession
+	shEmptySession
 	shGetKey
 	shLoadSession
 	shSessionLen
@@ -140,6 +141,13 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 				delete(shList, request.rSID)
 				go goRemove(aSessionDir, request.rSID)
 				request.reply <- &TSession{}
+
+			case shEmptySession:
+				_, ok := shList[request.rSID]
+				request.reply <- &TSession{
+					sID:    request.rSID,
+					sValue: (!ok),
+				}
 
 			case shGetKey:
 				result := &TSession{

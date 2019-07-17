@@ -56,6 +56,16 @@ func (so *TSession) Destroy() {
 	so.sID = ""
 } // Destroy()
 
+// EmptySession returns whether the current session has no associated data.
+func (so *TSession) EmptySession() bool {
+	result := so.request(shEmptySession, "", nil)
+	if b, ok := result.sValue.(bool); ok {
+		return b
+	}
+
+	return false
+} // EmptySession()
+
 // Get returns the session data identified by `aKey`.
 //
 // If `aKey` doesn't exist the method returns `nil`.
