@@ -20,10 +20,10 @@ type (
 	// `tShList` is the list of known sessions
 	tShList map[string]*tSessionData
 
-	// `tShLookupType` is the kind of request to `sessionMonitor()`
+	// `tShLookupType` is the kind of request to `goMonitor()`
 	tShLookupType int
 
-	// `tShRequest` is the request structure channeled to `sessionMonitor()`
+	// `tShRequest` is the request structure channeled to `goMonitor()`
 	tShRequest struct {
 		rKey   string
 		rSID   string
@@ -44,7 +44,7 @@ type (
 )
 
 const (
-	// The possible request types send to `sessionMonitor()`
+	// The possible request types send to `goMonitor()`
 	shNone = tShLookupType(1 << iota)
 	shChangeSession
 	shDeleteKey
@@ -54,8 +54,26 @@ const (
 	shSessionLen
 	shSetKey
 	shStoreSession
-	shTerminate // for testing only: terminate `sessionMonitor()`
+	shTerminate // for testing only: terminate `goMonitor()`
 )
+
+// `goDel()` deletes the file and session data for `aSID`.
+//
+// This function is called from `goGC()`
+//
+// We need this additional level of indirection to delete both, the
+// session data in memory and the session file.
+func goDel(aSID string) {
+	answer := make(chan *TSession)
+	defer close(answer)
+
+	chSession <- tShRequest{
+		rSID:  aSID,
+		rType: shDestroySession,
+		reply: answer,
+	}
+	<-answer
+} // goDel()
 
 // `goGC()` cleans up old sessions.
 //
@@ -77,8 +95,7 @@ func goGC(aSessionDir string) {
 		}
 		if fi.ModTime().Before(expired) {
 			fName := filepath.Base(file)
-			sid := fName[:len(fName)-4]
-			go goRemove(aSessionDir, sid)
+			go goDel(fName[:len(fName)-4])
 		}
 	}
 } // goGC()
