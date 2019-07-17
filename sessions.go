@@ -266,10 +266,10 @@ func SessionTTL() int {
 //
 // `aTTL` is the number of seconds a session's life lasts.
 func SetSessionTTL(aTTL int) {
-	if 0 >= aTTL {
-		sessionTTL = 600 // 600 seconds == 10 minutes
-	} else {
+	if 0 < aTTL {
 		sessionTTL = aTTL
+	} else {
+		sessionTTL = 600 // 600 seconds == 10 minutes
 	}
 } // SetSessionTTL()
 
@@ -344,41 +344,41 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 
 	return http.HandlerFunc(
 		func(aWriter http.ResponseWriter, aRequest *http.Request) {
-			defer func() {
-				// make sure a `panic` won't kill the program
-				if err := recover(); err != nil {
-					log.Printf("[%v] caught panic: %v", aRequest.RemoteAddr, err)
+			switch aRequest.Method {
+			case "GET", "POST":
+				session := &TSession{
+					sID: aRequest.FormValue(string(sidName)),
 				}
-			}()
+				if 0 == len(session.sID) {
+					session.sID = newSID()
+				}
 
-			session := &TSession{
-				sID: aRequest.FormValue(string(sidName)),
+				// load session file from disk
+				session.request(shLoadSession, "", nil)
+
+				// replace the old SID by a new ID
+				session.changeID()
+
+				// prepare a reference for `GetSession()`
+				ctx := context.WithValue(aRequest.Context(), sidName, session.sID)
+				aRequest = aRequest.WithContext(ctx)
+
+				// keep a session reference with the writer
+				hr := &tHRefWriter{
+					aWriter,
+					session.sID,
+				}
+
+				// the original handler can access the session now
+				aHandler.ServeHTTP(hr, aRequest)
+
+				// save the possibly updated session data
+				session.request(shStoreSession, "", nil)
+
+			default:
+				// run the original handler
+				aHandler.ServeHTTP(aWriter, aRequest)
 			}
-			if 0 == len(session.sID) {
-				session.sID = newSID()
-			}
-
-			// load session file from disk
-			session.request(shLoadSession, "", nil)
-
-			// replace the old SID by a new ID
-			session.changeID()
-
-			// prepare a reference for `GetSession()`
-			ctx := context.WithValue(aRequest.Context(), sidName, session.sID)
-			aRequest = aRequest.WithContext(ctx)
-
-			// keep a session reference with the writer
-			hr := &tHRefWriter{
-				aWriter,
-				session.sID,
-			}
-
-			// the original handler can access the session now
-			aHandler.ServeHTTP(hr, aRequest)
-
-			// save the possibly updated session data
-			session.request(shStoreSession, "", nil)
 		})
 } // Wrap()
 
