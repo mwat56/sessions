@@ -144,12 +144,11 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 
 			case smEmptySession:
 				result := &TSession{
-					sID: request.rSID,
+					sID:    request.rSID,
+					sValue: true,
 				}
 				if data, ok := shList[request.rSID]; ok {
 					result.sValue = (0 == len(*data))
-				} else {
-					result.sValue = true
 				}
 				request.reply <- result
 
@@ -157,24 +156,26 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 				result := &TSession{
 					sID: request.rSID,
 				}
-				if data, ok := shList[request.rSID]; ok {
-					if val, ok := (*data)[request.rKey]; ok {
-						result.sValue = val
-					}
+				data, ok := shList[request.rSID]
+				if !ok {
+					data = loadSession(aSessionDir, request.rSID)
+					shList[request.rSID] = data
+				}
+				if val, ok := (*data)[request.rKey]; ok {
+					result.sValue = val
 				}
 				request.reply <- result
 
 			case smLoadSession:
-				data, ok := shList[request.rSID]
-				if !ok {
-					data = loadSession(aSessionDir, request.rSID)
+				if _, ok := shList[request.rSID]; !ok {
+					shList[request.rSID] = loadSession(aSessionDir, request.rSID)
 				}
-				shList[request.rSID] = data
 				request.reply <- &TSession{sID: request.rSID}
 
 			case smSessionLen:
 				result := &TSession{
-					sID: request.rSID,
+					sID:    request.rSID,
+					sValue: 0,
 				}
 				if data, ok := shList[request.rSID]; ok {
 					result.sValue = len(*data)
@@ -184,6 +185,10 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 			case smSetKey:
 				if data, ok := shList[request.rSID]; ok {
 					(*data)[request.rKey] = request.rValue
+				} else {
+					data = loadSession(aSessionDir, request.rSID)
+					(*data)[request.rKey] = request.rValue
+					shList[request.rSID] = data
 				}
 				request.reply <- &TSession{sID: request.rSID}
 
