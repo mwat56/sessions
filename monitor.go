@@ -143,11 +143,15 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 				request.reply <- &TSession{}
 
 			case smEmptySession:
-				_, ok := shList[request.rSID]
-				request.reply <- &TSession{
-					sID:    request.rSID,
-					sValue: (!ok),
+				result := &TSession{
+					sID: request.rSID,
 				}
+				if data, ok := shList[request.rSID]; ok {
+					result.sValue = (0 == len(*data))
+				} else {
+					result.sValue = true
+				}
+				request.reply <- result
 
 			case smGetKey:
 				result := &TSession{
