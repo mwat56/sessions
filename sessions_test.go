@@ -7,6 +7,9 @@
 package sessions
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
 	"time"
@@ -26,10 +29,21 @@ func initTestSession() string {
 	so := &TSession{
 		sID: sid,
 	}
-	so.request(smLoadSession, "", nil)
+	so = so.request(smLoadSession, "", nil)
 
 	return sid
 } // initTestSession()
+
+func initRequest() (string, *http.Request) {
+	sid := initTestSession()
+	result := httptest.NewRequest("GET", "/", nil)
+
+	// prepare a reference for `GetSession()`
+	ctx := context.WithValue(result.Context(), sidName, sid)
+	result = result.WithContext(ctx)
+
+	return sid, result
+} // initRequest()
 
 func Test_newID(t *testing.T) {
 	tests := []struct {
@@ -49,6 +63,63 @@ func Test_newID(t *testing.T) {
 		})
 	}
 } // Test_newID()
+
+func TestGetSession(t *testing.T) {
+	sid, req := initRequest()
+	w1 := &TSession{sID: sid}
+	type args struct {
+		aRequest *http.Request
+	}
+	tests := []struct {
+		name string
+		args args
+		want *TSession
+	}{
+		// TODO: Add test cases.
+		{" 1", args{req}, w1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := GetSession(tt.args.aRequest); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetSession() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+} // TestGetSession()
+
+func TestTSession_Get(t *testing.T) {
+	sid := initTestSession()
+	defer func() {
+		chSession <- tShRequest{rType: smTerminate}
+	}()
+	s1 := TSession{sID: sid}
+	now := time.Now()
+	s1.Set("Datum", now)
+	type args struct {
+		aKey string
+	}
+	tests := []struct {
+		name   string
+		fields TSession
+		args   args
+		want   interface{}
+	}{
+		// TODO: Add test cases.
+		{" 1", s1, args{"Datum"}, now},
+		{" 2", s1, args{"Real"}, 12345.6789},
+		{" 3", s1, args{"Wahr"}, true},
+		{" 4", s1, args{"Zahl"}, 123456789},
+		{" 5", s1, args{"Zeichenkette"}, "eine Zeichenkette"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			so := &tt.fields
+			if got := so.Get(tt.args.aKey); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("TSession.Get() = %v,\nwant %v", got, tt.want)
+			}
+		})
+	}
+} // TestTSession_Get()
 
 func TestTSession_GetBool(t *testing.T) {
 	sid := initTestSession()
@@ -318,3 +389,42 @@ func TestTSession_request(t *testing.T) {
 		})
 	}
 } // TestTSession_request()
+
+func TestTSession_Set(t *testing.T) {
+	sid := initTestSession()
+	defer func() {
+		chSession <- tShRequest{rType: smTerminate}
+	}()
+	s1 := TSession{sID: sid}
+	w1 := &s1
+	type args struct {
+		aKey   string
+		aValue interface{}
+	}
+	tests := []struct {
+		name   string
+		fields TSession
+		args   args
+		want   *TSession
+	}{
+		// TODO: Add test cases.
+		{" 1", s1, args{"testkey1", "value1"}, w1},
+		{" 2", s1, args{"testkey2", true}, w1},
+		{" 3", s1, args{"Datum", time.Now()}, w1},
+		{" 4", s1, args{"Real", 12345.6789}, w1},
+		{" 5", s1, args{"Wahr", false}, w1},
+		{" 6", s1, args{"Zahl", 987654321}, w1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			so := &tt.fields
+			got := so.Set(tt.args.aKey, tt.args.aValue)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("TSession.Set() = %v,\nwant %v", got, tt.want)
+			}
+			if got.Get(tt.args.aKey) != tt.args.aValue {
+				t.Errorf("TSession.Set() = %v,\nwant %v", got, tt.want)
+			}
+		})
+	}
+} // TestTSession_Set()
