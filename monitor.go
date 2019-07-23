@@ -108,7 +108,7 @@ func goGC(aSessionDir string) {
 func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 	shList := make(tShList, 32) // list of active sessions
 	go goGC(aSessionDir)        // cleanup old session files
-	timer := time.NewTimer(time.Duration(sessionTTL<<4)*time.Second + 1)
+	timer := time.NewTimer(time.Duration(sessionTTL<<1)*time.Second + 1)
 	defer timer.Stop()
 
 	for { // wait for requests
@@ -204,7 +204,7 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 
 		case <-timer.C:
 			go goGC(aSessionDir)
-			timer.Reset(time.Duration(sessionTTL<<4)*time.Second + 1)
+			timer.Reset(time.Duration(sessionTTL<<1)*time.Second + 1)
 		} // select
 	} // for
 } // goMonitor()
