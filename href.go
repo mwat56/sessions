@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 )
 
 type (
@@ -31,6 +30,9 @@ var (
 
 	// lookup table for appending CGI argument
 	lookupCGIchar = tBoolLookup{true: "&", false: "?"}
+
+	// check whether an URL start with a scheme
+	schemeRE = regexp.MustCompile(`^\w+:`)
 )
 
 // `appendSID()` appends the current session ID to all `a href` tags.
@@ -56,7 +58,7 @@ func (hr *tHRefWriter) appendSID(aData []byte) []byte {
 		if 0 == len(linkMatches[cnt][2]) { // the URL to check
 			continue
 		}
-		if strings.HasPrefix(string(linkMatches[cnt][2]), "http") {
+		if schemeRE.Match(linkMatches[cnt][2]) {
 			continue // skip links to external sites
 		}
 		repl := fmt.Sprintf("%s%s%s%s%s",
