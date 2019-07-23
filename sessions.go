@@ -86,13 +86,13 @@ func (so *TSession) Get(aKey string) interface{} {
 // and `false`.
 //
 //	`aKey` The identifier to lookup.
-func (so *TSession) GetBool(aKey string) (bool, bool) {
+func (so *TSession) GetBool(aKey string) (rBool bool, rOK bool) {
 	result := so.request(smGetKey, aKey, nil)
 	if b, ok := result.sValue.(bool); ok {
-		return b, true
+		rBool, rOK = b, true
 	}
 
-	return false, false
+	return
 } // GetBool()
 
 // GetFloat returns the `float64` session data identified by `aKey`.
@@ -146,13 +146,13 @@ func (so *TSession) GetInt(aKey string) (int64, bool) {
 // and `false`.
 //
 //	`aKey` The identifier to lookup.
-func (so *TSession) GetString(aKey string) (string, bool) {
+func (so *TSession) GetString(aKey string) (rStr string, rOK bool) {
 	result := so.request(smGetKey, aKey, nil)
 	if str, ok := result.sValue.(string); ok {
-		return str, true
+		rStr, rOK = str, true
 	}
 
-	return "", false
+	return
 } // GetString()
 
 // GetTime returns the `time.Time` session data identified by `aKey`.
