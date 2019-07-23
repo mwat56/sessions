@@ -3,12 +3,15 @@
 [![GoDoc](https://godoc.org/github.com/mwat56/sessions?status.svg)](https://godoc.org/github.com/mwat56/sessions)
 [![License](https://img.shields.io/eclipse-marketplace/l/notepad4e.svg)](https://github.com/mwat56/sessions/blob/master/LICENSE)
 
-- [Sessions](#Sessions)
-	- [Purpose / About](#Purpose--About)
-	- [Installation](#Installation)
-	- [Usage](#Usage)
-	- [Internals](#Internals)
-	- [Licence](#Licence)
+- [Sessions](#sessions)
+	- [Purpose / About](#purpose--about)
+	- [Installation](#installation)
+	- [Usage](#usage)
+	- [Hints](#hints)
+		- [Session files](#session-files)
+		- [GETter](#getter)
+	- [Internals](#internals)
+	- [Licence](#licence)
 
 ## Purpose / About
 
@@ -20,12 +23,17 @@ _Cookies are bad_.
 
 In practice `cookies` are basically an invasion into the user's property (`cookies` claim disk space and require additional electricity for processing) and they are, by definition, kind of a surveillance and tracking tool.
 Nobody who has their user's best interesst in mind would consider using `cookies`.
-Their only advantage is that they are easy to implement – which was kind of the point: ease of implementation.
+Their only advantage is that they are easy to implement – which was kind of the point initially: ease of implementation.
 On the other hand the remote users were considered just a passive and obedient consumer – an essumption you can't really make in general:
 Since `cookies` are stored on the remote user's computer you don't really have control over that piece of data but instead the remote user's computer (which means the remote user) ultimately controls this data and thus can easily manipulate it.
 In other words: _`cookies` are inherently insecure_.
 It's clear that nowadays – with data security and the user's privacy in mind – using `cookies` is just an outdated technique.
 It's also clear that harvesting the user's facilities (including disk space and electricity) should be avoided.
+
+Additionally using `Cookies` requires you to use `JavaScript` as well (which is another barrier best to be avoided).
+In the European Union – with all its currently 28 member countries – `Cookies` are allowed only if the user explicitely agrees; in other words: they may _not be set automatically_.
+And to get the user's consent you'd need Javascript which then – after reading the user's reaction – either sets a `Cookie` _or not_.
+So if you care for a barrier-free web-presentation and want to respect privacy and data-protection laws you can't use `Cookies`.
 
 Another flaw you'll find in the literature about user sessions is the fact that it's often primarily considered in connection with users who are in one way or another _logged in_ with the web-server.
 But that is only _one_ possible reason for considering some kind of session (data) store.
@@ -43,11 +51,11 @@ That's an impression probably every programmer knows – at least if they do ref
 
 An other point to consider was to find a solution that's not dependent on third party facilities.
 That most prominently excludes external database systems (like e.g. MariaDB and others alike).
-The only database system to use is the OS's filesystem, the only system, that is, which doesn't add another possible point of failure.
-And it is by definition faster than any other system because every other database system runs _on top_ of the filesystem and therefore adds some amount of overhead.
+The only database system to use is the OS's filesystem, the only system, that is, which doesn't add another possible layer of failure.
+And it is by definition faster than any other system because every other database system runs _on top_ of the filesystem and therefore adds some amount of overhead (either in system calls or memory use or both.
 
-While it can be challenging and interesting to figure out some smart database structure and sophisticated queries to access and retrieve data such an endeavour is often simply over-the-top.
-That's true especially for a job like session handling that has just two tasks to accomplish: point and grab (i.e. reading/loading data) and throw and forget (i.e. writing/storing data).
+While it can be challenging and interesting to figure out some smart database structure and sophisticated queries to access and retrieve data – such an endeavour is often simply over-the-top.
+That's true especially for a job like session handling that has just two tasks to accomplish: point and grab (i.e. loading/reading data) and throw and forget (i.e. writing/storing data).
 
 So, in short: I wanted a system that's as unintrusive as possible (i.e. respecting the user's privacy) and doesn't depend on anything but what is there in any case (i.e. the filesystem).
 And, of course, it should be easy to use by the developer.
@@ -86,11 +94,10 @@ To include the session handling provided by this package you just call the `Wrap
 
 Then from inside your pagehandler `myHandler`:
 
-	// ...
-
+	// …
 	// `aRequest` is the `*http.Request` argument passed to your handler func
 	mySession := sessions.GetSession(aRequest)
-	// ...
+	// …
 	myVal := mySession.Get("myKey")
 	myVal2 := mySession.Get("myKey2")
 	// do something with `myVal`/`myVal2`
@@ -99,10 +106,45 @@ Then from inside your pagehandler `myHandler`:
 	mySession.Set("otherKey", otherVal)
 	someNumber:= 123.456
 	mySession.Set("numberKey", someNumber)
-	// ...
+	// …
 
 Please note that both, the return value of `mySession.Get()` and the argument value of `mySession.Set()`, are defined/typed as `interface{}`.
 That way you can store any value as session data.
+
+## Hints
+
+### Session files
+
+Most web-pages contain more than just HTML markup but other elements as well like stylesheets, or JavaScript, or images.
+When any of these elements are requested by the remote users (i.e. their browser) a unique session will be created; which is usually not what you want.
+If you have, say, ten images and a stylesheet in your page this library will create 12 unique session IDs, one for the page itself (i.e. the HTML), ten for the images and another one for the stylesheet while you actually need only one (for the HTML page as such).
+Since your page handler has to deal with serving all of the page elements you could get rid of the superfluous sessions by destroying them, for example:
+
+	// …
+	// in the handler's branch for images
+	mySession := sessions.GetSession(aRequest)
+	mySession.Destroy()
+	// …
+
+This way there will be no session file created for the unwanted page element.
+
+Or – you could just ignore this inconvenience and let the library's internal Garbage Collector take care of the unneeded sessions.
+
+### GETter
+
+The session object returned by `GetSession()` allows you to store and retrieve any data type.
+This is possible by internally using the empty `interface{}` which in consequence means that you seem to loose all type safety.
+To help you with retrieving some common data types the session objects provides a few different GETter methods:
+
+* `Get(aKey string) interface{}` returns a seemingly untyped result;
+* `GetBool(aKey string) (bool, bool)` returns a `Boolean` value;
+* `GetFloat(aKey string) (float64, bool)` returns a `Float` result;
+* `GetInt(aKey string) (int64, bool)` returns an `Int` result;
+* `GetString(aKey string) (string, bool)` returns a `String` result;
+* `GetTime(aKey string) (time.Time, bool)` returns a `Time` result.
+
+The respective second `bool` return value signals whether the data associated with the respective `aKey` is indeed of the requested type.
+If this is not the case that second return value will be `false` and the first return value will be the zero value of the respective type.
 
 ## Internals
 
@@ -120,7 +162,7 @@ To get the current setting you can call
 
 	sid := sessions.SIDname()
 
-The `SID` and the one-time-value are appended automatically as an [CGI argument](https://en.wikipedia.org/wiki/Common_Gateway_Interface) to all local `a href=""` links of the web page sent to the remote user, whereas _local_ means all links without a request scheme like `http:` or `https:`.
+The `SID` and the one-time-value are appended automatically as an [CGI argument](https://en.wikipedia.org/wiki/Common_Gateway_Interface) to all local `a href="…"` links of the web page sent to the remote user, whereas _local_ means all links without a request scheme like `http:` or `https:`.
 
 The package provides an internal garbage collector which deletes all expired sessions.
 `Expired` are sessions when they were not touched/updated within the last _10 minutes_.
