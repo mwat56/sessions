@@ -1,7 +1,10 @@
 # Sessions
 
+[![Golang](https://img.shields.io/badge/Language-Go-green.svg?style=flat)](https://golang.org)
 [![GoDoc](https://godoc.org/github.com/mwat56/sessions?status.svg)](https://godoc.org/github.com/mwat56/sessions)
-[![License](https://img.shields.io/eclipse-marketplace/l/notepad4e.svg)](https://github.com/mwat56/sessions/blob/master/LICENSE)
+[![Size](https://img.shields.io/github/repo-size/mwat56/sessions.svg)](https://github.com/mwat56/sessions/)
+[![Tag](https://img.shields.io/github/tag/mwat56/sessions.svg?style=flat-square)](https://github.com/mwat56/sessions/tags)
+[![License](https://img.shields.io/github/license/mwat56/sessions.svg)](https://github.com/mwat56/sessions/blob/master/LICENSE)
 
 - [Sessions](#sessions)
 	- [Purpose / About](#purpose--about)
@@ -115,8 +118,8 @@ That way you can store any value as session data.
 
 ### Session files
 
-Most web-pages contain more than just HTML markup but other elements as well like stylesheets, or JavaScript, or images.
-When any of these elements are requested by the remote users (i.e. their browser) a unique session will be created; which is usually not what you want.
+Most web-pages contain more than just HTML markup but other elements as well like _stylesheets_, or _JavaScript_, or _images_.
+When any of these elements are requested by the remote users (i.e. their browser) a unique session will be created – which is usually not what you want.
 If you have, say, ten images and a stylesheet in your page this library will create 12 unique session IDs, one for the page itself (i.e. the HTML), ten for the images and another one for the stylesheet while you actually need only one (for the HTML page as such).
 Since your page handler has to deal with serving all of the page elements you could get rid of the superfluous sessions by destroying them, for example:
 
@@ -129,6 +132,7 @@ Since your page handler has to deal with serving all of the page elements you co
 This way there will be no session file created for the unwanted page element.
 
 Or – you could just ignore this inconvenience and let the library's internal Garbage Collector take care of the unneeded sessions.
+Empty sessions (i.e. sessions with no data added to it) will not
 
 ### GETter
 
@@ -171,7 +175,7 @@ This default time can be changed by calling
 	sessions.SetSessionTTL(aTTL int)
 
 with `aTTL` seconds as the new time-to-life.
-You can get the current TTL by calling
+You can get the current TTL (in seconds) by calling
 
 	ttl := sessions.SessionTTL()
 
