@@ -1,9 +1,10 @@
 # Sessions
 
-[![Golang](https://img.shields.io/badge/Language-Go-green.svg?style=flat)](https://golang.org)
-[![GoDoc](https://godoc.org/github.com/mwat56/sessions?status.svg)](https://godoc.org/github.com/mwat56/sessions)
+[![Golang](https://img.shields.io/badge/Language-Go-green.svg)](https://golang.org/)
+[![GoDoc](https://godoc.org/github.com/mwat56/sessions?status.svg)](https://godoc.org/github.com/mwat56/sessions/)
+[![Issues](https://img.shields.io/github/issues/mwat56/sessions.svg)](https://github.com/mwat56/sessions/issues?q=is%3Aopen+is%3Aissue)
 [![Size](https://img.shields.io/github/repo-size/mwat56/sessions.svg)](https://github.com/mwat56/sessions/)
-[![Tag](https://img.shields.io/github/tag/mwat56/sessions.svg?style=flat-square)](https://github.com/mwat56/sessions/tags)
+[![Tag](https://img.shields.io/github/tag/mwat56/sessions.svg)](https://github.com/mwat56/sessions/tags)
 [![License](https://img.shields.io/github/license/mwat56/sessions.svg)](https://github.com/mwat56/sessions/blob/master/LICENSE)
 
 - [Sessions](#sessions)
@@ -22,7 +23,7 @@ I wanted a session data solution that's user-friendly – including privacy-frie
 When doing some research about saving/retrieving sessions data with `Go` (aka `Golang`) you'll find some slightly different solutions which have, however, one detail in common: they all depend on socalled internet `cookies`.
 Which is bad.
 
-_Cookies are bad_.
+> _Cookies are bad_.
 
 In practice `cookies` are basically an invasion into the user's property (`cookies` claim disk space and require additional electricity for processing) and they are, by definition, kind of a surveillance and tracking tool.
 Nobody who has their user's best interesst in mind would consider using `cookies`.
