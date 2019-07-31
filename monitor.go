@@ -241,7 +241,7 @@ func goStore(aSessionDir string, aSID string, aData tSessionData) {
 	gob.Register(ss)
 
 	fName := filepath.Join(aSessionDir, aSID) + ".sid"
-	file, err := os.OpenFile(fName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0660)
+	file, err := os.OpenFile(fName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0640) // #nosec G302
 	if nil != err {
 		return
 	}
