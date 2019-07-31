@@ -6,6 +6,8 @@
 
 package sessions
 
+//lint:file-ignore ST1017 - I prefer Yoda conditions
+
 import (
 	"context"
 	"crypto/rand"
@@ -332,6 +334,7 @@ func checkSessionDir(aSessionDir string) (rDir string, rErr error) {
 			rErr = err
 		}
 	} else if !fi.IsDir() {
+		//lint:ignore ST1005 Capitalisation wanted
 		rErr = fmt.Errorf("Not a directory: %q", rDir)
 	}
 

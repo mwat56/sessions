@@ -29,7 +29,7 @@ func initTestSession() string {
 	so := &TSession{
 		sID: sid,
 	}
-	so = so.request(smLoadSession, "", nil)
+	_ = so.request(smLoadSession, "", nil)
 
 	return sid
 } // initTestSession()

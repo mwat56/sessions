@@ -6,6 +6,8 @@
 
 package sessions
 
+//lint:file-ignore ST1017 - I prefer Yoda conditions
+
 import (
 	"encoding/gob"
 	"os"
