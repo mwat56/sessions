@@ -252,7 +252,7 @@ func GetSession(aRequest *http.Request) *TSession {
 // `newSID()` returns an ID based on time and random bytes.
 func newSID() string {
 	b := make([]byte, 16)
-	rand.Read(b)
+	_, _ = rand.Read(b)
 	id := fmt.Sprintf("%d%s", time.Now().UnixNano(), b)
 	b = []byte(id[:24])
 

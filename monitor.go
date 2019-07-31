@@ -219,7 +219,7 @@ func goRemove(aSessionDir, aSID string) {
 		return
 	}
 
-	os.Remove(fName)
+	_ = os.Remove(fName)
 } // goRemove()
 
 // `goStore()` saves `aData` of `aSID` on disk.
@@ -239,13 +239,13 @@ func goStore(aSessionDir string, aSID string, aData tSessionData) {
 	gob.Register(ss)
 
 	fName := filepath.Join(aSessionDir, aSID) + ".sid"
-	file, err := os.OpenFile(fName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0664)
+	file, err := os.OpenFile(fName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0660)
 	if nil != err {
 		return
 	}
 	defer file.Close()
 
-	gob.NewEncoder(file).Encode(ss)
+	_ = gob.NewEncoder(file).Encode(ss)
 } // goStore()
 
 // `loadSession()` reads the data for `aSID` from disk.
@@ -267,7 +267,7 @@ func loadSession(aSessionDir, aSID string) *tSessionData {
 	gob.Register(now)
 	gob.Register(ss)
 	decoder := gob.NewDecoder(file)
-	decoder.Decode(&ss) // ignoring error: the following tests will catch it
+	_ = decoder.Decode(&ss) // ignoring error: the following tests will catch it
 	if e, ok := ss["expires"]; ok {
 		if expireSecs, ok := e.(int64); ok &&
 			time.Unix(expireSecs, 0).After(now) {
