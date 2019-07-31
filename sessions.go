@@ -317,7 +317,7 @@ func SIDname() string {
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // `checkSessionDir()` checks whether `aSessionDir` exists and
-// creates it if neccessary.
+// creates it if necessary.
 //
 // This function is a helper of and called by `Wrap()`.
 func checkSessionDir(aSessionDir string) (rDir string, rErr error) {

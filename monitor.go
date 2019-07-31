@@ -267,7 +267,7 @@ func loadSession(aSessionDir, aSID string) *tSessionData {
 	gob.Register(now)
 	gob.Register(ss)
 	decoder := gob.NewDecoder(file)
-	err = decoder.Decode(&ss)
+	decoder.Decode(&ss) // ignoring error: the following tests will catch it
 	if e, ok := ss["expires"]; ok {
 		if expireSecs, ok := e.(int64); ok &&
 			time.Unix(expireSecs, 0).After(now) {
