@@ -23,7 +23,7 @@ type (
 	// `tShLookupType` is the kind of request to `goMonitor()`
 	tShLookupType int
 
-	// `tShRequest` is the request structure channeled to `goMonitor()`
+	// `tShRequest` is the request structure channelled to `goMonitor()`
 	tShRequest struct {
 		rKey   string
 		rSID   string
