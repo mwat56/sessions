@@ -2,6 +2,7 @@
 
 [![Golang](https://img.shields.io/badge/Language-Go-green.svg)](https://golang.org/)
 [![GoDoc](https://godoc.org/github.com/mwat56/sessions?status.svg)](https://godoc.org/github.com/mwat56/sessions/)
+[![Go Report](https://goreportcard.com/badge/github.com/mwat56/sessions)](https://goreportcard.com/report/github.com/mwat56/sessions)
 [![Issues](https://img.shields.io/github/issues/mwat56/sessions.svg)](https://github.com/mwat56/sessions/issues?q=is%3Aopen+is%3Aissue)
 [![Size](https://img.shields.io/github/repo-size/mwat56/sessions.svg)](https://github.com/mwat56/sessions/)
 [![Tag](https://img.shields.io/github/tag/mwat56/sessions.svg)](https://github.com/mwat56/sessions/tags)
