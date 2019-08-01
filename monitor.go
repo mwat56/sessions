@@ -47,7 +47,7 @@ type (
 
 const (
 	// The possible request types send to `goMonitor()`
-	smNone = tShLookupType(1 << iota)
+	smTerminate = tShLookupType(1 << iota) // for testing only: terminate `goMonitor()`
 	smChangeSession
 	smDeleteKey
 	smDestroySession
@@ -57,7 +57,6 @@ const (
 	smSessionLen
 	smSetKey
 	smStoreSession
-	smTerminate // for testing only: terminate `goMonitor()`
 )
 
 // `goDel()` deletes the file and session data for `aSID`.

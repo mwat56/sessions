@@ -241,7 +241,7 @@ func GetSession(aRequest *http.Request) *TSession {
 	if 0 == len(sid) {
 		ctx := aRequest.Context()
 		if id, ok := ctx.Value(sidName).(string /* tSIDname */); ok {
-			sid = string(id)
+			sid = id
 		} else {
 			sid = newSID()
 		}
