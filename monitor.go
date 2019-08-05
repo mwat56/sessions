@@ -51,7 +51,6 @@ const (
 	smChangeSession
 	smDeleteKey
 	smDestroySession
-	smEmptySession
 	smGetKey
 	smLoadSession
 	smSessionLen
@@ -74,7 +73,7 @@ func goDel(aSID string) {
 		rType: smDestroySession,
 		reply: answer,
 	}
-	<-answer
+	<-answer // ignore the result
 } // goDel()
 
 // `goGC()` cleans up old sessions.
@@ -143,16 +142,6 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 				go goRemove(aSessionDir, request.rSID)
 				request.reply <- &TSession{}
 
-			case smEmptySession:
-				result := &TSession{
-					sID:    request.rSID,
-					sValue: true,
-				}
-				if data, ok := shList[request.rSID]; ok {
-					result.sValue = (0 == len(*data))
-				}
-				request.reply <- result
-
 			case smGetKey:
 				result := &TSession{
 					sID: request.rSID,
@@ -195,7 +184,9 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 
 			case smStoreSession:
 				if data, ok := shList[request.rSID]; ok {
-					go goStore(aSessionDir, request.rSID, *data)
+					if 0 < len(*data) {
+						go goStore(aSessionDir, request.rSID, *data)
+					}
 				}
 				request.reply <- &TSession{sID: request.rSID}
 
@@ -240,7 +231,7 @@ func goStore(aSessionDir string, aSID string, aData tSessionData) {
 	gob.Register(ss)
 
 	fName := filepath.Join(aSessionDir, aSID) + ".sid"
-	file, err := os.OpenFile(fName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0640) // #nosec G302
+	file, err := os.OpenFile(fName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if nil != err {
 		return
 	}

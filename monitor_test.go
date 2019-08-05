@@ -14,7 +14,7 @@ import (
 
 func Test_goStore(t *testing.T) {
 	sdir, _ := filepath.Abs("./sessions")
-	sid := "aTestSID"
+	sid := newSID()
 	list := make(tSessionData)
 	list["Zeichenkette"] = "eine Zeichenkette"
 	list["Zahl"] = 123456789

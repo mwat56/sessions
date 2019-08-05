@@ -24,7 +24,7 @@ func initTestSession() string {
 	sData["Wahr"] = true
 	sData["Zahl"] = 123456789
 	sData["Zeichenkette"] = "eine Zeichenkette"
-	sid := "aTestSID"
+	sid := newSID() // "aTestSID"
 	goStore(sdir, sid, sData)
 	so := &TSession{
 		sID: sid,
@@ -66,6 +66,9 @@ func Test_newID(t *testing.T) {
 
 func TestGetSession(t *testing.T) {
 	sid, req := initRequest()
+	defer func() {
+		chSession <- tShRequest{rType: smTerminate}
+	}()
 	w1 := &TSession{sID: sid}
 	type args struct {
 		aRequest *http.Request

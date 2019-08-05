@@ -60,9 +60,10 @@ func (so *TSession) Destroy() {
 
 // EmptySession returns whether the current session has no associated data.
 func (so *TSession) EmptySession() bool {
-	result := so.request(smEmptySession, "", nil)
-	if b, ok := result.sValue.(bool); ok {
-		return b
+	// This method is called by `tHRefWriter.appendSID()`.
+	result := so.request(smSessionLen, "", nil)
+	if len, ok := result.sValue.(int); ok {
+		return (0 == len)
 	}
 
 	return false
@@ -215,9 +216,7 @@ func (so *TSession) request(aType tShLookupType, aKey string, aValue interface{}
 //	`aKey` The identifier to lookup.
 //	`aValue` The value to assign.
 func (so *TSession) Set(aKey string, aValue interface{}) *TSession {
-	so.request(smSetKey, aKey, aValue)
-
-	return so
+	return so.request(smSetKey, aKey, aValue)
 } // Set()
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
