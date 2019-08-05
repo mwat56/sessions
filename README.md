@@ -134,7 +134,7 @@ Since your page handler has to deal with serving all of the page elements you co
 This way there will be no session file created for the unwanted page element.
 
 Or – you could just ignore this inconvenience and let the library's internal Garbage Collector take care of the unneeded sessions.
-Empty sessions (i.e. sessions with no data added to it) will not
+Empty sessions (i.e. sessions with no data added to it) will not be saved to disk.
 
 ### GETter
 
