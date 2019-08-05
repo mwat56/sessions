@@ -25,7 +25,7 @@ func initTestSession() string {
 	sData["Zahl"] = 123456789
 	sData["Zeichenkette"] = "eine Zeichenkette"
 	sid := newSID() // "aTestSID"
-	goStore(sdir, sid, sData)
+	goStore(sdir, sid, &sData)
 	so := &TSession{
 		sID: sid,
 	}
