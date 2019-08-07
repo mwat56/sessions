@@ -229,21 +229,16 @@ var (
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// GetSession returns the `TSession` for `aRequest`.
-//
-// If `aRequest` doesn't provide a session ID in its form values
-// a new (empty) `TSession` instance is returned.
+// GetSession returns a `TSession` instance for `aRequest`.
 //
 // `aRequest` is the HTTP request received by the server.
 func GetSession(aRequest *http.Request) *TSession {
-	sid := aRequest.FormValue(string(sidName))
-	if 0 == len(sid) {
-		ctx := aRequest.Context()
-		if id, ok := ctx.Value(sidName).(string /* tSIDname */); ok {
-			sid = id
-		} else {
-			sid = newSID()
-		}
+	var sid string
+	ctx := aRequest.Context()
+	if id, ok := ctx.Value(sidName).(string /* tSIDname */); ok {
+		sid = id
+	} else {
+		sid = newSID()
 	}
 	so := &TSession{sID: sid}
 
