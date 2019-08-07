@@ -247,6 +247,8 @@ func TestTSession_GetString(t *testing.T) {
 		chSession <- tShRequest{rType: smTerminate}
 	}()
 	s1 := TSession{sID: sid}
+	qos := `|0|true|""|0|25|25|"tag:\"=Golang\""|0|29|8|`
+	s1.Set("QOS", qos)
 	type args struct {
 		aKey string
 	}
@@ -263,6 +265,7 @@ func TestTSession_GetString(t *testing.T) {
 		{" 3", s1, args{"Wahr"}, "", false},
 		{" 4", s1, args{"Zahl"}, "", false},
 		{" 5", s1, args{"Zeichenkette"}, "eine Zeichenkette", true},
+		{" 6", s1, args{"QOS"}, qos, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
