@@ -184,7 +184,10 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 
 			case smStoreSession:
 				if data, ok := shList[request.rSID]; ok {
-					if 0 < len(*data) {
+					if 0 == len(*data) {
+						// free unused memory
+						delete(shList, request.rSID)
+					} else {
 						go goStore(aSessionDir, request.rSID, data)
 					}
 				}
@@ -217,7 +220,7 @@ func goRemove(aSessionDir, aSID string) {
 // `goStore()` saves `aData` of `aSID` on disk.
 //
 //	`aSessionDir` The directory where the session files are stored.
-//	`aSID` the session ID of the datra to be stored.
+//	`aSID` The session ID of the data to be stored.
 //	`aData` The session data to store.
 func goStore(aSessionDir string, aSID string, aData *tSessionData) {
 	now := time.Now()
