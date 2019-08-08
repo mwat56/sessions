@@ -16,6 +16,8 @@
 		- [Session files](#session-files)
 		- [GETter](#getter)
 	- [Internals](#internals)
+		- [Session name](#session-name)
+		- [GC](#gc)
 	- [Licence](#licence)
 
 ## Purpose / About
@@ -24,7 +26,7 @@ I wanted a session data solution that's user-friendly – including privacy-frie
 When doing some research about saving/retrieving sessions data with `Go` (aka `Golang`) you'll find some slightly different solutions which have, however, one detail in common: they all depend on socalled internet `cookies`.
 Which is bad.
 
-> _Cookies are bad_.
+> _Cookies are generally bad_.
 
 In practice `cookies` are basically an invasion into the user's property (`cookies` claim disk space and require additional electricity for processing) and they are, by definition, kind of a surveillance and tracking tool.
 Nobody who has their user's best interesst in mind would consider using `cookies`.
@@ -37,7 +39,7 @@ It's also clear that harvesting the user's facilities (including disk space and 
 
 Additionally using `Cookies` requires you to use `JavaScript` as well (which is another barrier best to be avoided).
 In the European Union – with all its currently 28 member countries – `Cookies` are allowed only if the user explicitely agrees; in other words: they may _not be set automatically_.
-And to get the user's consent you'd need Javascript which then – after reading the user's reaction – either sets a `Cookie` _or not_.
+And to get the user's consent you'd need JavaScript code which then – after reading the user's reaction – either sets a `Cookie` _or not_.
 So if you care for a barrier-free web-presentation and want to respect privacy and data-protection laws you can't use `Cookies`.
 
 Another flaw you'll find in the literature about user sessions is the fact that it's often primarily considered in connection with users who are in one way or another _logged in_ with the web-server.
@@ -76,7 +78,7 @@ You can use `Go` to install this package for you:
 To include the session handling provided by this package you just call the `Wrap()` function as shown here:
 
 	func main() {
-		// ...
+		// …
 		// system setup etc.
 
 		sessionDir := "./sessions"
@@ -84,7 +86,7 @@ To include the session handling provided by this package you just call the `Wrap
 		// or commandline option.
 
 		pageHandler := http.NewServeMux() // or you own page handling provider
-		pageHandler.HandleFunc("/", myHandler)
+		pageHandler.HandleFunc("/", myHandler) // dito
 
 		server := http.Server{
 			Addr:    "127.0.0.1:8080",
@@ -106,7 +108,7 @@ Then from inside your pagehandler `myHandler`:
 	myVal := mySession.Get("myKey")
 	myVal2 := mySession.Get("myKey2")
 	// do something with `myVal`/`myVal2`
-	// ...
+	// …
 	otherVal := "important session value"
 	mySession.Set("otherKey", otherVal)
 	someNumber:= 123.456
@@ -128,10 +130,12 @@ Since your page handler has to deal with serving all of the page elements you co
 	// …
 	// in the handler's branch for images
 	mySession := sessions.GetSession(aRequest)
+	// …
 	mySession.Destroy()
 	// …
 
 This way there will be no session file created for the unwanted page element.
+The same is true if you simply don't use the session instance to store any data (calling `mySession.Set(…)`).
 
 Or – you could just ignore this inconvenience and let the library's internal Garbage Collector take care of the unneeded sessions.
 Empty sessions (i.e. sessions with no data added to it) will not be saved to disk.
@@ -154,8 +158,10 @@ If this is not the case that second return value will be `false` and the first r
 
 ## Internals
 
-The package loads the sessions data (if any) whenever a page is requested and it stores the session data when the page handling is finished.
+The package loads the sessions data (if any) whenever a page is requested and it stores the session data when the page handling is finished (i.e. after the page request was served).
 This is done automatically and you don't have to worry about loading/storing (read/write) of the session data.
+
+### Session name
 
 The session ID (`SID`) is handled automatically as well.
 Each ID is valid only for a single request by the remote user and changes for each request.
@@ -166,11 +172,13 @@ The name of the `SID` can be changed by calling
 if the default (i.e. `SID`) doesn't satisfy your requirements.
 To get the current setting you can call
 
-	sid := sessions.SIDname()
+	sidname := sessions.SIDname()
 
 The `SID` and the one-time-value are appended automatically as an [CGI argument](https://en.wikipedia.org/wiki/Common_Gateway_Interface) to all local `a href="…"` links of the web page sent to the remote user, whereas _local_ means all links without a request scheme like `http:` or `https:`.
 
-The package provides an internal garbage collector which deletes all expired sessions.
+### GC
+
+The package provides an internal garbage collector (GC) which deletes expired sessions.
 `Expired` are sessions when they were not touched/updated within the last _10 minutes_.
 This default time can be changed by calling
 
@@ -180,6 +188,8 @@ with `aTTL` seconds as the new time-to-life.
 You can get the current TTL (in seconds) by calling
 
 	ttl := sessions.SessionTTL()
+
+To be on the safe side the GC runs in background with an interval of twice the TTL.
 
 ## Licence
 
