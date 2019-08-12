@@ -351,6 +351,10 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 
 	return http.HandlerFunc(
 		func(aWriter http.ResponseWriter, aRequest *http.Request) {
+			if excludeURL(aRequest.URL.Path) {
+				aHandler.ServeHTTP(aWriter, aRequest)
+				return
+			}
 			switch aRequest.Method {
 			case "GET", "POST":
 				session := &TSession{

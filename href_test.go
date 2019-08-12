@@ -17,6 +17,7 @@ func Test_tHRefWriter_appendSID(t *testing.T) {
 		chSession <- tShRequest{rType: smTerminate}
 	}()
 	h1 := tHRefWriter{sID: sid}
+	AddExcludePath("thumb")
 	d0 := []byte(`bla bla bla`)
 	w0 := d0
 	d1 := []byte(`Bla bla <a title="Link(1)" href="page1.html">Link(1)</a>`)
@@ -29,8 +30,11 @@ func Test_tHRefWriter_appendSID(t *testing.T) {
 	d4 := []byte(`Bla bla <a title="Link(4)" href="page4.html?k=v#fragment">Link(4)</a>`)
 	w4 := []byte(`Bla bla <a title="Link(4)" href="page4.html?k=v&` + string(sidName) + `=` + sid + `#fragment">Link(4)</a>`)
 
-	d5 := []byte(string(d1) + string(d2) + string(d3))
-	w5 := []byte(string(w1) + string(w2) + string(w3))
+	d5 := []byte(`Bla bla <a title="Link(5)" href="thumb/cover.jpg">Link(5)</a>`)
+	w5 := d5
+
+	d6 := []byte(string(d1) + string(d2) + string(d3) + string(d5))
+	w6 := []byte(string(w1) + string(w2) + string(w3) + string(w5))
 	type args struct {
 		aData []byte
 	}
@@ -47,6 +51,7 @@ func Test_tHRefWriter_appendSID(t *testing.T) {
 		{" 3", h1, args{d3}, w3},
 		{" 4", h1, args{d4}, w4},
 		{" 5", h1, args{d5}, w5},
+		{" 6", h1, args{d6}, w6},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -140,6 +140,27 @@ The same is true if you simply don't use the session instance to store any data 
 Or – you could just ignore this inconvenience and let the library's internal Garbage Collector take care of the unneeded sessions.
 Empty sessions (i.e. sessions with no data added to it) will not be saved to disk.
 
+To further mitigate the problem with creating sessions for e.g. media files there is a function to declare certains URLs to skip in session handling:
+
+	// AddExcludePath appends `aPath` to the list of ignored URL paths.
+	//
+	// The given `aPath` is supposed to be the start (beginning) of the
+	// URL to exclude from session handling.
+	// If `aPath` doesn't start with a slash (`/`) it's automatically
+	// prepended.
+	//
+	//	aPath An URL path to skip in session handling.
+	func AddExcludePath(aPath string) { … }
+
+The local URLs passed to that function will be ignored by the session handling. e.g.
+
+	sessions.AddExcludePath("/css")
+	sessions.AddExcludePath("/img")
+	sessions.AddExcludePath("favicon")
+	// …
+
+All requested URLs starting with one of the added exclude paths will be ignored; that means neither will be there a session created nor will the internal session ID be changed.
+
 ### GETter
 
 The session object returned by `GetSession()` allows you to store and retrieve any data type.

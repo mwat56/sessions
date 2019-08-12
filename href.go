@@ -16,7 +16,7 @@ import (
 )
 
 type (
-	// `tLogWriter` embeds a `ResponseWriter`
+	// `tHRefWriter` embeds a `ResponseWriter`
 	tHRefWriter struct {
 		http.ResponseWriter // used to construct the HTTP response
 		sID                 string
@@ -33,11 +33,11 @@ var (
 	// lookup table for appending CGI argument
 	lookupCGIchar = tBoolLookup{true: "&", false: "?"}
 
-	// check whether an URL start with a scheme
+	// check whether an URL starts with a scheme
 	schemeRE = regexp.MustCompile(`^\w+:`)
 )
 
-// `appendSID()` appends the current session ID to all `a href` tags.
+// `appendSID()` appends the current session ID to all local `a href` tags.
 //
 // `aData` The web/http response.
 func (hr *tHRefWriter) appendSID(aData []byte) []byte {
@@ -62,6 +62,9 @@ func (hr *tHRefWriter) appendSID(aData []byte) []byte {
 		}
 		if schemeRE.Match(linkMatches[cnt][2]) {
 			continue // skip links to external sites
+		}
+		if excludeURL(string(linkMatches[cnt][2])) {
+			continue // skip excluded URLs
 		}
 		repl := fmt.Sprintf("%s%s%s%s%s",
 			linkMatches[cnt][1],

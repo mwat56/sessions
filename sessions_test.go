@@ -429,7 +429,7 @@ func TestTSession_Set(t *testing.T) {
 				t.Errorf("TSession.Set() = %v,\nwant %v", got, tt.want)
 			}
 			if got.Get(tt.args.aKey) != tt.args.aValue {
-				t.Errorf("TSession.Set() = %v,\nwant %v", got, tt.want)
+				t.Errorf("TSession.Set() = %v,\nwant %v", got.Get(tt.args.aKey), tt.args.aValue)
 			}
 		})
 	}
