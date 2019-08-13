@@ -142,24 +142,24 @@ Empty sessions (i.e. sessions with no data added to it) will not be saved to dis
 
 To further mitigate the problem with creating sessions for e.g. media files there is a function to declare certains URLs to skip in session handling:
 
-	// AddExcludePath appends `aPath` to the list of ignored URL paths.
+	// ExcludePaths appends the `aPath` arguments to the list of
+	// ignored URL paths.
 	//
-	// The given `aPath` is supposed to be the start (beginning) of the
-	// URL to exclude from session handling.
-	// If `aPath` doesn't start with a slash (`/`) it's automatically
-	// prepended.
+	// The given `aPath` arguments are supposed to be the start (beginning)
+	// of the respective URL to exclude from session handling.
+	// If an `aPath` argument doesn't start with a slash (`/`) it's
+	// automatically prepended.
 	//
-	//	aPath An URL path to skip in session handling.
-	func AddExcludePath(aPath string) { … }
+	//	aPath List of URL paths to skip in session handling.
+	//	The return value is the current length of the exclude's list.
+	func ExcludePaths(aPath ...string) int { … }
 
-The local URLs passed to that function will be ignored by the session handling. e.g.
+The local URLs paths (i.q. without a protocol and host part) passed to that function will be ignored by the session handling. e.g.
 
-	sessions.AddExcludePath("/css")
-	sessions.AddExcludePath("/img")
-	sessions.AddExcludePath("favicon")
+	sessions.ExcludePaths("css", "/favicon", "/img/")
 	// …
 
-All requested URLs starting with one of the added exclude paths will be ignored; that means neither will be there a session created nor will the internal session ID be changed.
+All requested URL paths starting with one of the added exclude paths will be ignored; that means neither will be there a session created nor will the internal session ID be changed.
 
 ### GETter
 

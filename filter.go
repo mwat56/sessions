@@ -18,27 +18,29 @@ var (
 	excludeList tExcludeList // The zero value of a slice is `nil`.
 )
 
-// AddExcludePath appends `aPath` to the list of ignored URL paths.
+// ExcludePaths appends the `aPath` arguments to the list of
+// ignored URL paths.
 //
-// The given `aPath` is supposed to be the start (beginning) of the URL to
-// exclude from session handling.
-// If `aPath` doesn't start with a slash (`/`) it's automatically prepended.
+// The given `aPath` arguments are supposed to be the start (beginning)
+// of the respective URL to exclude from session handling.
+// If an `aPath` argument doesn't start with a slash (`/`) it's
+// automatically prepended.
 //
-//	aPath An URL path to skip in session handling.
-func AddExcludePath(aPath string) {
-	if 0 == len(aPath) {
-		return
-	}
-	if '/' != aPath[0] {
-		aPath = "/" + aPath
-	}
+//	aPath List of URL paths to skip in session handling.
+//	The return value is the current length of the exclude's list.
+func ExcludePaths(aPath ...string) int {
 	if nil == excludeList { // lazy initialisation
-		excludeList = make(tExcludeList, 1, 16)
-		excludeList[0] = aPath
-	} else {
-		excludeList = append(excludeList, aPath)
+		excludeList = make(tExcludeList, 0, len(aPath)+16)
 	}
-} // AddExcludePath()
+	for _, path := range aPath {
+		if '/' != path[0] {
+			path = "/" + path
+		}
+		excludeList = append(excludeList, path)
+	}
+
+	return len(excludeList)
+} // ExcludePaths()
 
 // `excludeURL()` returns whether `aURLpath` is one to skip.
 //

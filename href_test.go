@@ -17,7 +17,7 @@ func Test_tHRefWriter_appendSID(t *testing.T) {
 		chSession <- tShRequest{rType: smTerminate}
 	}()
 	h1 := tHRefWriter{sID: sid}
-	AddExcludePath("thumb")
+	ExcludePaths("css", "thumb/")
 	d0 := []byte(`bla bla bla`)
 	w0 := d0
 	d1 := []byte(`Bla bla <a title="Link(1)" href="page1.html">Link(1)</a>`)
