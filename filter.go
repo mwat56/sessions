@@ -15,11 +15,11 @@ type (
 )
 
 var (
-	excludeList tExcludeList // The zero value of a slice is `nil`.
+	filterExcludeList tExcludeList // The zero value of a slice is `nil`.
 )
 
-// ExcludePaths appends the `aPath` arguments to the list of
-// ignored URL paths.
+// ExcludePaths appends the `aPath` arguments to the list of URL paths
+// to ignore.
 //
 // The given `aPath` arguments are supposed to be the start (beginning)
 // of the respective URL to exclude from session handling.
@@ -27,33 +27,34 @@ var (
 // automatically prepended.
 //
 //	aPath List of URL paths to skip in session handling.
-//	The return value is the current length of the exclude's list.
+//	The return value is the current length of the exclude list.
 func ExcludePaths(aPath ...string) int {
-	if nil == excludeList { // lazy initialisation
-		excludeList = make(tExcludeList, 0, len(aPath)+16)
+	if nil == filterExcludeList { // lazy initialisation
+		filterExcludeList = make(tExcludeList, 0, len(aPath)+16)
 	}
 	for _, path := range aPath {
 		if '/' != path[0] {
 			path = "/" + path
 		}
-		excludeList = append(excludeList, path)
+		filterExcludeList = append(filterExcludeList, path)
 	}
 
-	return len(excludeList)
+	return len(filterExcludeList)
 } // ExcludePaths()
 
 // `excludeURL()` returns whether `aURLpath` is one to skip.
 //
 //	aURLpath The URL path to ckeck for.
 func excludeURL(aURLpath string) bool {
+	if nil == filterExcludeList {
+		return false
+	}
 	if '/' != aURLpath[0] { // relative paths may omit leading slash
 		aURLpath = "/" + aURLpath
 	}
-	if nil != excludeList {
-		for _, skipPath := range excludeList {
-			if strings.HasPrefix(aURLpath, skipPath) {
-				return true
-			}
+	for _, skipPath := range filterExcludeList {
+		if strings.HasPrefix(aURLpath, skipPath) {
+			return true
 		}
 	}
 
