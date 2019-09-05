@@ -186,7 +186,7 @@ This is done automatically and you don't have to worry about loading/storing (re
 
 The session ID (`SID`) is handled automatically as well.
 Each ID is valid only for a single request by the remote user and changes for each request.
-The name of the `SID` can be changed by calling
+The `SID` name can be changed by calling
 
 	sessions.SetSIDname(aSID string)
 
@@ -200,7 +200,8 @@ The `SID` and the one-time-value are appended automatically as an [CGI argument]
 ### GC
 
 The package provides an internal garbage collector (GC) which deletes expired sessions.
-`Expired` are sessions when they were not touched/updated within the last _10 minutes_.
+
+Sessions are considered `expired` when they were not touched/updated within the last _10 minutes_.
 This default time can be changed by calling
 
 	sessions.SetSessionTTL(aTTL int)
