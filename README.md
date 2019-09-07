@@ -35,7 +35,7 @@ On the other hand the remote users were considered just a passive and obedient c
 Since `cookies` are stored on the remote user's computer you don't really have control over that piece of data but instead the remote user's computer (which means the remote user) ultimately controls this data and thus can easily manipulate it.
 In other words: _`cookies` are inherently insecure_.
 It's clear that nowadays – with data security and the user's privacy in mind – using `cookies` is just an outdated technique.
-It's also clear that harvesting the user's facilities (including disk space and electricity) should be avoided.
+It's also clear that harvesting the user's facilities (including disk space and electricity) should be avoided wherever possible.
 
 Additionally using `Cookies` requires you to use `JavaScript` as well (which is another barrier best to be avoided).
 In the European Union – with all its currently 28 member countries – `Cookies` are allowed only if the user explicitly agrees; in other words: they may _not be set automatically_.
@@ -47,19 +47,19 @@ But that is only _one_ possible reason for considering some kind of session (dat
 Others may include, for example, individual navigation history (e.g. breadcrumbs), configuration data, personal preferences, etc.
 In any case, session data should be able to transcent certain states of a user's connection.
 And – that's a very important point – sessions should never _require_ a user to `log in`.
-The conception of the internet (more than a decade before that term became a synonym for commercial enterprise in the early 90s of the last centrury) was based on the idea of providing free access to as many data (i.e. knowledge) for as many people as possible.
+The conception of the internet (more than a decade before that term became a synonym for commercial enterprise in the early 90s of the last century) was based on the idea of providing free access to as many data (i.e. knowledge) for as many people as possible.
 Apart from other things that means: session data should never be used as a kind of lock-in or surveillance measure.
 
 The ease of use for the application developer was mentioned before (when discussing the inherent badness of `cookies`).
 That critique does not, however, mean that it should be difficult to implement session handling as such.
-In fact, a huge part of the time I spent developing this package was spent figuring out an easy way to handle session data.
+In fact, a huge part of the time I spent developing this package was spent figuring out an easy way (for the developer) to handle session data.
 Now, after it's done, everything seems just 'logical', as if it's obvious how to do things.
 That's an impression probably every programmer knows – at least if they do reflect what they are doing.
 
 An other point to consider was to find a solution that's not dependent on third party facilities.
 That most prominently excludes external database systems (like e.g. MariaDB and others alike).
 The only database system to use is the OS's filesystem, the only system, that is, which doesn't add another possible layer of failure.
-And it is by definition faster than any other system because every other database system runs _on top_ of the filesystem and therefore adds some amount of overhead (either in system calls or memory use or both.
+And it is by definition faster than any other system because every other database system runs _on top_ of the filesystem and therefore adds some amount of overhead (either in system calls or memory use or both).
 
 While it can be challenging and interesting to figure out some smart database structure and sophisticated queries to access and retrieve data – such an endeavour is often simply over-the-top.
 That's true especially for a job like session handling that has just two tasks to accomplish: point and grab (i.e. loading/reading data) and throw and forget (i.e. writing/storing data).
@@ -85,7 +85,7 @@ To include the session handling provided by this package you just call the `Wrap
 		// this value should probably come from some config file
 		// or commandline option.
 
-		pageHandler := http.NewServeMux() // or you own page handling provider
+		pageHandler := http.NewServeMux() // or your own page handling provider
 		pageHandler.HandleFunc("/", myHandler) // dito
 
 		server := http.Server{
@@ -174,18 +174,18 @@ To help you with retrieving some common data types the session objects provides 
 * `GetString(aKey string) (string, bool)` returns a `String` result;
 * `GetTime(aKey string) (time.Time, bool)` returns a `Time` result.
 
-The respective second `bool` return value signals whether the data associated with the respective `aKey` is indeed of the requested type.
+The respective second (`bool`) return value signals whether the data associated with the respective `aKey` is indeed of the requested type.
 If this is not the case that second return value will be `false` and the first return value will be the zero value of the respective type.
 
 ## Internals
 
 The package loads the sessions data (if any) whenever a page is requested and it stores the session data when the page handling is finished (i.e. after the page request was served).
-This is done automatically and you don't have to worry about loading/storing (read/write) of the session data.
+This is done automatically and you don't have to worry about loading/storing (read/write) the session data.
 
 ### Session name
 
 The session ID (`SID`) is handled automatically as well.
-Each ID is valid only for a single request by the remote user and changes for each request.
+Each ID is valid only for _a single request_ by the remote user and changes for each request.
 The `SID` name can be changed by calling
 
 	sessions.SetSIDname(aSID string)
@@ -206,7 +206,7 @@ This default time can be changed by calling
 
 	sessions.SetSessionTTL(aTTL int)
 
-with `aTTL` seconds as the new time-to-life.
+with `aTTL` seconds as the new time-to-life. –
 You can get the current TTL (in seconds) by calling
 
 	ttl := sessions.SessionTTL()
