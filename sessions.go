@@ -62,8 +62,8 @@ func (so *TSession) Destroy() {
 func (so *TSession) EmptySession() bool {
 	// This method is called by `tHRefWriter.appendSID()`.
 	result := so.request(smSessionLen, "", nil)
-	if len, ok := result.sValue.(int); ok {
-		return (0 == len)
+	if sLen, ok := result.sValue.(int); ok {
+		return (0 == sLen)
 	}
 
 	return false
@@ -89,7 +89,7 @@ func (so *TSession) Get(aKey string) interface{} {
 // and `false`.
 //
 //	`aKey` The identifier to lookup.
-func (so *TSession) GetBool(aKey string) (rBool bool, rOK bool) {
+func (so *TSession) GetBool(aKey string) (rBool, rOK bool) {
 	result := so.request(smGetKey, aKey, nil)
 	if b, ok := result.sValue.(bool); ok {
 		rBool, rOK = b, true
@@ -183,8 +183,8 @@ func (so *TSession) ID() string {
 // Len returns the current length of the list of session vars.
 func (so *TSession) Len() int {
 	result := so.request(smSessionLen, "", nil)
-	if len, ok := result.sValue.(int); ok {
-		return len
+	if rLen, ok := result.sValue.(int); ok {
+		return rLen
 	}
 
 	return 0
@@ -199,7 +199,7 @@ func (so *TSession) request(aType tShLookupType, aKey string, aValue interface{}
 	answer := make(chan *TSession)
 	defer close(answer)
 
-	chSession <- tShRequest{
+	soSessionChannel <- tShRequest{
 		rKey:   aKey,
 		rSID:   so.sID,
 		rType:  aType,
@@ -224,7 +224,7 @@ func (so *TSession) Set(aKey string, aValue interface{}) *TSession {
 var (
 	// The channel to send requests through to `goMonitor()`
 	// (`tShRequest` defined in `monitor.go`).
-	chSession = make(chan tShRequest, 2)
+	soSessionChannel = make(chan tShRequest, 2)
 )
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -235,7 +235,7 @@ var (
 func GetSession(aRequest *http.Request) *TSession {
 	var sid string
 	ctx := aRequest.Context()
-	if id, ok := ctx.Value(sidName).(string /* tSIDname */); ok {
+	if id, ok := ctx.Value(soSidName).(string /* tSIDname */); ok {
 		sid = id
 	} else {
 		sid = newSID()
@@ -258,14 +258,14 @@ func newSID() string {
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 var (
-	// `sessionTTL` is the max. TTL for an unused session.
+	// `soSessionTTL` is the max. TTL for an unused session.
 	// It defaults to 600 seconds (10 minutes).
-	sessionTTL = 600
+	soSessionTTL = 600
 )
 
 // SessionTTL returns the Time-To-Life of a session (in seconds).
 func SessionTTL() int {
-	return sessionTTL
+	return soSessionTTL
 } // SessionTTL()
 
 // SetSessionTTL sets the lifetime of a session.
@@ -273,9 +273,9 @@ func SessionTTL() int {
 // `aTTL` is the number of seconds a session's life lasts.
 func SetSessionTTL(aTTL int) {
 	if 0 < aTTL {
-		sessionTTL = aTTL
+		soSessionTTL = aTTL
 	} else {
-		sessionTTL = 600 // 600 seconds == 10 minutes
+		soSessionTTL = 600 // 600 seconds == 10 minutes
 	}
 } // SetSessionTTL()
 
@@ -288,8 +288,8 @@ type (
 )
 
 var (
-	// `sidName` is the GET/POST identifier fo the session ID.
-	sidName = tSIDname("SID")
+	// `soSidName` is the GET/POST identifier fo the session ID.
+	soSidName = tSIDname("SID")
 )
 
 // SetSIDname sets the name of the session ID.
@@ -297,7 +297,7 @@ var (
 // `aSID` identifies the session data.
 func SetSIDname(aSID string) {
 	if 0 < len(aSID) {
-		sidName = tSIDname(aSID)
+		soSidName = tSIDname(aSID)
 	}
 } // SetSIDname
 
@@ -307,7 +307,7 @@ func SetSIDname(aSID string) {
 // name of a CGI argument.
 // Its default value is `SID`.
 func SIDname() string {
-	return string(sidName)
+	return string(soSidName)
 } // SIDname()
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -328,7 +328,7 @@ func checkSessionDir(aSessionDir string) (rDir string, rErr error) {
 			rErr = err
 		}
 	} else if !fi.IsDir() {
-		//lint:ignore ST1005 Capitalisation wanted
+		//lint:ignore ST1005 – Capitalisation wanted
 		rErr = fmt.Errorf("Not a directory: %q", rDir)
 	}
 
@@ -345,7 +345,7 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 		if dir, err := checkSessionDir(aSessionDir); nil != err {
 			log.Fatalf("%s: %v", os.Args[0], err)
 		} else {
-			go goMonitor(dir, chSession)
+			go goMonitor(dir, soSessionChannel)
 		}
 	})
 
@@ -358,19 +358,19 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 			switch aRequest.Method {
 			case "GET", "POST":
 				session := &TSession{
-					sID: aRequest.FormValue(string(sidName)),
+					sID: aRequest.FormValue(string(soSidName)),
 				}
 				if 0 < len(session.sID) {
 					// load session file from disk
 					session.request(smLoadSession, "", nil)
 				} else {
-					session.sID = string(sidName) // dummy value
+					session.sID = string(soSidName) // dummy value
 				}
 				// replace the old SID by a new ID
 				session.changeID()
 
 				// prepare a reference for `GetSession()`
-				ctx := context.WithValue(aRequest.Context(), sidName, session.sID)
+				ctx := context.WithValue(aRequest.Context(), soSidName, session.sID)
 				aRequest = aRequest.WithContext(ctx)
 
 				// keep a session reference with the writer

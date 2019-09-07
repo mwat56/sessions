@@ -17,7 +17,7 @@ import (
 
 func initTestSession() string {
 	sdir, _ := checkSessionDir("./sessions")
-	go goMonitor(sdir, chSession)
+	go goMonitor(sdir, soSessionChannel)
 	sData := make(tSessionData)
 	sData["Datum"] = time.Now()
 	sData["Real"] = 12345.6789
@@ -39,7 +39,7 @@ func initRequest() (string, *http.Request) {
 	result := httptest.NewRequest("GET", "/", nil)
 
 	// prepare a reference for `GetSession()`
-	ctx := context.WithValue(result.Context(), sidName, sid)
+	ctx := context.WithValue(result.Context(), soSidName, sid)
 	result = result.WithContext(ctx)
 
 	return sid, result
@@ -67,7 +67,7 @@ func Test_newID(t *testing.T) {
 func TestGetSession(t *testing.T) {
 	sid, req := initRequest()
 	defer func() {
-		chSession <- tShRequest{rType: smTerminate}
+		soSessionChannel <- tShRequest{rType: smTerminate}
 	}()
 	w1 := &TSession{sID: sid}
 	type args struct {
@@ -93,7 +93,7 @@ func TestGetSession(t *testing.T) {
 func TestTSession_Get(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
-		chSession <- tShRequest{rType: smTerminate}
+		soSessionChannel <- tShRequest{rType: smTerminate}
 	}()
 	s1 := TSession{sID: sid}
 	now := time.Now()
@@ -127,7 +127,7 @@ func TestTSession_Get(t *testing.T) {
 func TestTSession_GetBool(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
-		chSession <- tShRequest{rType: smTerminate}
+		soSessionChannel <- tShRequest{rType: smTerminate}
 	}()
 	s1 := TSession{sID: sid}
 	type args struct {
@@ -167,7 +167,7 @@ func TestTSession_GetBool(t *testing.T) {
 func TestTSession_GetFloat(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
-		chSession <- tShRequest{rType: smTerminate}
+		soSessionChannel <- tShRequest{rType: smTerminate}
 	}()
 	s1 := TSession{sID: sid}
 	type args struct {
@@ -207,7 +207,7 @@ func TestTSession_GetFloat(t *testing.T) {
 func TestTSession_GetInt(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
-		chSession <- tShRequest{rType: smTerminate}
+		soSessionChannel <- tShRequest{rType: smTerminate}
 	}()
 	s1 := TSession{sID: sid}
 	type args struct {
@@ -244,7 +244,7 @@ func TestTSession_GetInt(t *testing.T) {
 func TestTSession_GetString(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
-		chSession <- tShRequest{rType: smTerminate}
+		soSessionChannel <- tShRequest{rType: smTerminate}
 	}()
 	s1 := TSession{sID: sid}
 	qos := `|0|true|""|0|25|25|"tag:\"=Golang\""|0|29|8|`
@@ -284,7 +284,7 @@ func TestTSession_GetString(t *testing.T) {
 func TestTSession_GetTime(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
-		chSession <- tShRequest{rType: smTerminate}
+		soSessionChannel <- tShRequest{rType: smTerminate}
 	}()
 	s1 := TSession{sID: sid}
 	var zero time.Time
@@ -328,7 +328,7 @@ func TestTSession_GetTime(t *testing.T) {
 func TestTSession_Len(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
-		chSession <- tShRequest{rType: smTerminate}
+		soSessionChannel <- tShRequest{rType: smTerminate}
 	}()
 	s1 := TSession{sID: sid}
 	w1 := 5
@@ -359,7 +359,7 @@ func TestTSession_Len(t *testing.T) {
 func TestTSession_request(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
-		chSession <- tShRequest{rType: smTerminate}
+		soSessionChannel <- tShRequest{rType: smTerminate}
 	}()
 	sid2 := "aTestSID2"
 	s1 := TSession{sID: sid}
@@ -399,7 +399,7 @@ func TestTSession_request(t *testing.T) {
 func TestTSession_Set(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
-		chSession <- tShRequest{rType: smTerminate}
+		soSessionChannel <- tShRequest{rType: smTerminate}
 	}()
 	s1 := TSession{sID: sid}
 	w1 := &s1

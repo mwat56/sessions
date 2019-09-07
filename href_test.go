@@ -14,21 +14,21 @@ import (
 func Test_tHRefWriter_appendSID(t *testing.T) {
 	sid := initTestSession()
 	defer func() {
-		chSession <- tShRequest{rType: smTerminate}
+		soSessionChannel <- tShRequest{rType: smTerminate}
 	}()
 	h1 := tHRefWriter{sID: sid}
 	ExcludePaths("css", "thumb/")
 	d0 := []byte(`bla bla bla`)
 	w0 := d0
 	d1 := []byte(`Bla bla <a title="Link(1)" href="page1.html">Link(1)</a>`)
-	w1 := []byte(`Bla bla <a title="Link(1)" href="page1.html?` + string(sidName) + `=` + sid + `">Link(1)</a>`)
+	w1 := []byte(`Bla bla <a title="Link(1)" href="page1.html?` + string(soSidName) + `=` + sid + `">Link(1)</a>`)
 	d2 := []byte(`Bla bla <a title="Link(2)" href="http://example.com/page2.html">Link(2)</a>`)
 	w2 := d2
 	d3 := []byte(`Bla bla <a title="Link(3)" href="page3.html?k=v">Link(3)</a>`)
-	w3 := []byte(`Bla bla <a title="Link(3)" href="page3.html?k=v&` + string(sidName) + `=` + sid + `">Link(3)</a>`)
+	w3 := []byte(`Bla bla <a title="Link(3)" href="page3.html?k=v&` + string(soSidName) + `=` + sid + `">Link(3)</a>`)
 
 	d4 := []byte(`Bla bla <a title="Link(4)" href="page4.html?k=v#fragment">Link(4)</a>`)
-	w4 := []byte(`Bla bla <a title="Link(4)" href="page4.html?k=v&` + string(sidName) + `=` + sid + `#fragment">Link(4)</a>`)
+	w4 := []byte(`Bla bla <a title="Link(4)" href="page4.html?k=v&` + string(soSidName) + `=` + sid + `#fragment">Link(4)</a>`)
 
 	d5 := []byte(`Bla bla <a title="Link(5)" href="thumb/cover.jpg">Link(5)</a>`)
 	w5 := d5

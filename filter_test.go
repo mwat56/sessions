@@ -11,7 +11,7 @@ import (
 )
 
 func TestExcludePaths(t *testing.T) {
-	filterExcludeList = nil // make sure to start with a fresh list
+	soFilterExcludeList = nil // make sure to start with a fresh list
 	type args struct {
 		aPath []string
 	}
@@ -35,7 +35,7 @@ func TestExcludePaths(t *testing.T) {
 } // TestExcludePaths()
 
 func Test_excludeURL(t *testing.T) {
-	filterExcludeList = nil // make sure to start with a fresh list
+	soFilterExcludeList = nil // make sure to start with a fresh list
 	ExcludePaths("css/", "/favicon", "/img/")
 	type args struct {
 		aURLpath string

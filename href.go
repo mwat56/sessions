@@ -28,13 +28,13 @@ type (
 
 var (
 	// RegEx to match complete link tags
-	hrefRE = regexp.MustCompile(`(?si)(<a[^>]*href=")([^"#]+)([^"]*"[^>]*>)`)
+	soHrefRE = regexp.MustCompile(`(?si)(<a[^>]*href=")([^"#]+)([^"]*"[^>]*>)`)
 
 	// lookup table for appending CGI argument
-	lookupCGIchar = tBoolLookup{true: "&", false: "?"}
+	soLookupCGIchar = tBoolLookup{true: "&", false: "?"}
 
 	// check whether an URL starts with a scheme
-	schemeRE = regexp.MustCompile(`^\w+:`)
+	soSchemeRE = regexp.MustCompile(`^\w+:`)
 )
 
 // `appendSID()` appends the current session ID to all local `a href` tags.
@@ -45,11 +45,11 @@ func (hr *tHRefWriter) appendSID(aData []byte) []byte {
 	if so.EmptySession() {
 		return aData
 	}
-	linkMatches := hrefRE.FindAllSubmatch(aData, -1)
+	linkMatches := soHrefRE.FindAllSubmatch(aData, -1)
 	if nil == linkMatches {
 		return aData
 	}
-	cgi := fmt.Sprintf("%s=%s", sidName, hr.sID)
+	cgi := fmt.Sprintf("%s=%s", soSidName, hr.sID)
 	/*
 		There are three cases to consider:
 			(a) links to external pages (ignored)
@@ -57,10 +57,10 @@ func (hr *tHRefWriter) appendSID(aData []byte) []byte {
 			(c) links to internal pages with CGI arguments
 	*/
 	for l, cnt := len(linkMatches), 0; cnt < l; cnt++ {
-		if 0 == len(linkMatches[cnt][2]) { // the URL to check
+		if 0 == len(linkMatches[cnt][2]) {
 			continue
 		}
-		if schemeRE.Match(linkMatches[cnt][2]) {
+		if soSchemeRE.Match(linkMatches[cnt][2]) {
 			continue // skip links to external sites
 		}
 		if excludeURL(string(linkMatches[cnt][2])) {
@@ -69,7 +69,7 @@ func (hr *tHRefWriter) appendSID(aData []byte) []byte {
 		repl := fmt.Sprintf("%s%s%s%s%s",
 			linkMatches[cnt][1],
 			linkMatches[cnt][2],
-			lookupCGIchar[0 < bytes.IndexRune(linkMatches[cnt][2], '?')],
+			soLookupCGIchar[0 < bytes.IndexRune(linkMatches[cnt][2], '?')],
 			cgi,
 			linkMatches[cnt][3])
 		aData = bytes.ReplaceAll(aData, linkMatches[cnt][0], []byte(repl))

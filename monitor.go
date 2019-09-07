@@ -46,7 +46,7 @@ type (
 )
 
 const (
-	// The possible request types send to `goMonitor()`
+	// Possible request types send to SessionMonitor `goMonitor()`
 	smTerminate = tShLookupType(1 << iota) // for testing only: terminate `goMonitor()`
 	smChangeSession
 	smDeleteKey
@@ -68,7 +68,7 @@ func goDel(aSID string) {
 	answer := make(chan *TSession)
 	defer close(answer)
 
-	chSession <- tShRequest{
+	soSessionChannel <- tShRequest{
 		rSID:  aSID,
 		rType: smDestroySession,
 		reply: answer,
@@ -83,7 +83,7 @@ func goDel(aSID string) {
 //
 //	`aSessionDir` The directory where the session files are stored.
 func goGC(aSessionDir string) {
-	secs := time.Now().Unix() - int64(sessionTTL)
+	secs := time.Now().Unix() - int64(soSessionTTL)
 	expired := time.Unix(secs, 0)
 	files, err := filepath.Glob(aSessionDir + "/*.sid")
 	if nil != err {
@@ -108,7 +108,7 @@ func goGC(aSessionDir string) {
 func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 	shList := make(tShList, 32) // list of active sessions
 	go goGC(aSessionDir)        // cleanup old session files
-	timer := time.NewTimer(time.Duration(sessionTTL<<1)*time.Second + 1)
+	timer := time.NewTimer(time.Duration(soSessionTTL<<1)*time.Second + 1)
 	defer timer.Stop()
 
 	for { // wait for requests
@@ -199,7 +199,7 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 
 		case <-timer.C:
 			go goGC(aSessionDir)
-			timer.Reset(time.Duration(sessionTTL<<1)*time.Second + 1)
+			timer.Reset(time.Duration(soSessionTTL<<1)*time.Second + 1)
 		} // select
 	} // for
 } // goMonitor()
@@ -222,11 +222,11 @@ func goRemove(aSessionDir, aSID string) {
 //	`aSessionDir` The directory where the session files are stored.
 //	`aSID` The session ID of the data to be stored.
 //	`aData` The session data to store.
-func goStore(aSessionDir string, aSID string, aData *tSessionData) {
+func goStore(aSessionDir, aSID string, aData *tSessionData) {
 	now := time.Now()
 	ss := tStoreStruct{
 		"data":    *aData,
-		"expires": now.Unix() + int64(sessionTTL) + 1,
+		"expires": now.Unix() + int64(soSessionTTL) + 1,
 		"sid":     aSID,
 	}
 	gob.Register(*aData)
