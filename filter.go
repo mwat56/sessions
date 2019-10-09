@@ -8,7 +8,14 @@ package sessions
 
 //lint:file-ignore ST1017 - I prefer Yoda conditions
 
-import "strings"
+/*
+ * This file provides functions to ignore certain URL paths
+ * from session handling.
+*/
+
+import (
+	"strings"
+)
 
 type (
 	tExcludeList []string
@@ -18,8 +25,8 @@ var (
 	soFilterExcludeList tExcludeList // The zero value of a slice is `nil`.
 )
 
-// ExcludePaths appends the `aPath` arguments to the list of URL paths
-// to ignore.
+// ExcludePaths appends the `aPath` argument(s) to the list of
+// URL paths to ignore.
 //
 // The given `aPath` arguments are supposed to be the start (beginning)
 // of the respective URL to exclude from session handling.
@@ -30,7 +37,7 @@ var (
 //	The return value is the current length of the exclude list.
 func ExcludePaths(aPath ...string) int {
 	if nil == soFilterExcludeList { // lazy initialisation
-		soFilterExcludeList = make(tExcludeList, 0, len(aPath)+16)
+		soFilterExcludeList = make(tExcludeList, 0, len(aPath)+8)
 	}
 	for _, path := range aPath {
 		if '/' != path[0] {

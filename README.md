@@ -26,7 +26,7 @@ I wanted a session data solution that's user-friendly – including privacy-frie
 When doing some research about saving/retrieving sessions data with `Go` (aka `Golang`) you'll find some slightly different solutions which have, however, one detail in common: they all depend on socalled internet `cookies`.
 Which is bad.
 
-> _Cookies are generally bad_.
+> _Cookies are bad_.
 
 In practice `cookies` are basically an invasion into the user's property (`cookies` claim disk space and require additional electricity for processing) and they are, by definition, kind of a surveillance and tracking tool.
 Nobody who has their user's best interest in mind would consider using `cookies`.
@@ -39,7 +39,7 @@ It's also clear that harvesting the user's facilities (including disk space and 
 
 Additionally using `Cookies` requires you to use `JavaScript` as well (which is another barrier best to be avoided).
 In the European Union – with all its currently 28 member countries – `Cookies` are allowed only if the user explicitly agrees; in other words: they may _not be set automatically_.
-And to get the user's consent you'd need JavaScript code which then – after reading the user's reaction – either sets a `Cookie` _or not_.
+And to get the user's consent you'd need JavaScript code which then – _after_ reading the user's reaction – either sets a `Cookie` _or not_.
 So if you care for a barrier-free web-presentation and want to respect privacy and data-protection laws you can't use `Cookies`.
 
 Another flaw you'll find in the literature about user sessions is the fact that it's often primarily considered in connection with users who are in one way or another _logged in_ with the web-server.
@@ -49,6 +49,9 @@ In any case, session data should be able to transcent certain states of a user's
 And – that's a very important point – sessions should never _require_ a user to `log in`.
 The conception of the internet (more than a decade before that term became a synonym for commercial enterprise in the early 90s of the last century) was based on the idea of providing free access to as many data (i.e. knowledge) for as many people as possible.
 Apart from other things that means: session data should never be used as a kind of lock-in or surveillance measure.
+
+Some people argue that cookies are technically necessary because without them you couldn't implement something like shopping carts etc.
+However, those peoply clearly confuse necessity with ease or comfort.
 
 The ease of use for the application developer was mentioned before (when discussing the inherent badness of `cookies`).
 That critique does not, however, mean that it should be difficult to implement session handling as such.
@@ -180,7 +183,7 @@ If this is not the case that second return value will be `false` and the first r
 ## Internals
 
 The package loads the sessions data (if any) whenever a page is requested and it stores the session data when the page handling is finished (i.e. after the page request was served).
-This is done automatically and you don't have to worry about loading/storing (read/write) the session data.
+This is done automatically and you don't have to worry about loading/storing (read/write) the session data manually.
 
 ### Session name
 
@@ -195,13 +198,14 @@ To get the current setting you can call
 
 	sidname := sessions.SIDname()
 
-The `SID` and the one-time-value are appended automatically as an [CGI argument](https://en.wikipedia.org/wiki/Common_Gateway_Interface) to all local `a href="…"` links of the web page sent to the remote user, whereas _local_ means all links without a request scheme like `http:` or `https:`.
+The `SID` and the one-time-value are appended automatically as an [CGI argument](https://en.wikipedia.org/wiki/Common_Gateway_Interface) to all local `a href="…"` links of the web page sent to the remote user, whereas _local_ means all links without a request scheme like e.g. `https:`.
+In other words: the current session ID is only available in the respective page's source code while the ID showing up in the browser's URL-line was valid only when the page was requested.
 
 ### GC
 
 The package provides an internal garbage collector (GC) which deletes expired sessions.
 
-Sessions are considered `expired` when they were not touched/updated within the last _10 minutes_.
+Sessions are considered `expired` when they were not touched/updated within the last `SessionTTL()` seconds (_10 minutes_ by default).
 This default time can be changed by calling
 
 	sessions.SetSessionTTL(aTTL int)

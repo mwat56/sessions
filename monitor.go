@@ -8,6 +8,11 @@ package sessions
 
 //lint:file-ignore ST1017 - I prefer Yoda conditions
 
+/*
+ * This file provides functions to monitor all session requests
+ * (i.e. reading/writing session data).
+ */
+
 import (
 	"encoding/gob"
 	"os"
@@ -108,7 +113,8 @@ func goGC(aSessionDir string) {
 func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 	shList := make(tShList, 32) // list of active sessions
 	go goGC(aSessionDir)        // cleanup old session files
-	timer := time.NewTimer(time.Duration(soSessionTTL<<1)*time.Second + 1)
+	gcInterval := time.Duration(soSessionTTL<<1)*time.Second + 1
+	timer := time.NewTimer(gcInterval)
 	defer timer.Stop()
 
 	for { // wait for requests
@@ -117,8 +123,8 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 			if !more { // channel closed
 				return
 			}
-			switch request.rType {
 
+			switch request.rType {
 			case smChangeSession:
 				newsid := newSID()
 				if data, ok := shList[request.rSID]; ok {
@@ -199,7 +205,7 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 
 		case <-timer.C:
 			go goGC(aSessionDir)
-			timer.Reset(time.Duration(soSessionTTL<<1)*time.Second + 1)
+			timer.Reset(gcInterval)
 		} // select
 	} // for
 } // goMonitor()
@@ -210,10 +216,7 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 //	`aSID` The session ID being destroyed.
 func goRemove(aSessionDir, aSID string) {
 	fName := filepath.Join(aSessionDir, aSID) + ".sid"
-	if _, err := os.Stat(fName); nil != err {
-		return
-	}
-
+	// we try to remove the file w/o any checks
 	_ = os.Remove(fName)
 } // goRemove()
 
@@ -244,6 +247,8 @@ func goStore(aSessionDir, aSID string, aData *tSessionData) {
 } // goStore()
 
 // `loadSession()` reads the data for `aSID` from disk.
+// If no (previous) session data is available, an empty session
+// is returned.
 //
 //	`aSessionDir` The directory where the session files are stored.
 //	`aSID` The session ID whose data are to be read from disk.

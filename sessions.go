@@ -58,8 +58,8 @@ func (so *TSession) Destroy() {
 	so.sID = ""
 } // Destroy()
 
-// EmptySession returns whether the current session has no associated data.
-func (so *TSession) EmptySession() bool {
+// Empty returns whether the current session has no associated data.
+func (so *TSession) Empty() bool {
 	// This method is called by `tHRefWriter.appendSID()`.
 	result := so.request(smSessionLen, "", nil)
 	if sLen, ok := result.sValue.(int); ok {
@@ -67,7 +67,7 @@ func (so *TSession) EmptySession() bool {
 	}
 
 	return false
-} // EmptySession()
+} // Empty()
 
 // Get returns the session data identified by `aKey`.
 //
@@ -190,7 +190,13 @@ func (so *TSession) Len() int {
 	return 0
 } // Len()
 
-// `request()` queries the session manager for certain data.
+var (
+	// This channel is used to send requests through to `goMonitor()`
+	// (`tShRequest` defined in `monitor.go`).
+	soSessionChannel = make(chan tShRequest, 2)
+)
+
+// `request()` queries the session monitor for certain data.
 //
 //	`aType` The lookup type.
 //	`aKey` Optional session variable name/key.
@@ -199,6 +205,7 @@ func (so *TSession) request(aType tShLookupType, aKey string, aValue interface{}
 	answer := make(chan *TSession)
 	defer close(answer)
 
+	// Pass data to the `goMonitor()` function:
 	soSessionChannel <- tShRequest{
 		rKey:   aKey,
 		rSID:   so.sID,
@@ -218,14 +225,6 @@ func (so *TSession) request(aType tShLookupType, aKey string, aValue interface{}
 func (so *TSession) Set(aKey string, aValue interface{}) *TSession {
 	return so.request(smSetKey, aKey, aValue)
 } // Set()
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-var (
-	// The channel to send requests through to `goMonitor()`
-	// (`tShRequest` defined in `monitor.go`).
-	soSessionChannel = make(chan tShRequest, 2)
-)
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -321,7 +320,7 @@ func checkSessionDir(aSessionDir string) (rDir string, rErr error) {
 		return
 	}
 	if fi, err := os.Stat(rDir); nil != err {
-		if e, ok := err.(*os.PathError); ok && syscall.ENOENT == e.Err {
+		if e, ok := err.(*os.PathError); ok && (syscall.ENOENT == e.Err) {
 			fmode := os.ModeDir | 0775
 			rErr = os.MkdirAll(filepath.FromSlash(rDir), fmode)
 		} else {
@@ -355,6 +354,7 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 				aHandler.ServeHTTP(aWriter, aRequest)
 				return
 			}
+
 			switch aRequest.Method {
 			case "GET", "POST":
 				session := &TSession{
@@ -369,15 +369,15 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 				// replace the old SID by a new ID
 				session.changeID()
 
-				// prepare a reference for `GetSession()`
-				ctx := context.WithValue(aRequest.Context(), soSidName, session.sID)
-				aRequest = aRequest.WithContext(ctx)
-
 				// keep a session reference with the writer
 				hr := &tHRefWriter{
 					aWriter,
 					session.sID,
 				}
+
+				// prepare a reference for `GetSession()`
+				ctx := context.WithValue(aRequest.Context(), soSidName, session.sID)
+				aRequest = aRequest.WithContext(ctx)
 
 				// the original handler can access the session now
 				aHandler.ServeHTTP(hr, aRequest)

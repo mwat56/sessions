@@ -8,6 +8,11 @@ package sessions
 
 //lint:file-ignore ST1017 - I prefer Yoda conditions
 
+/*
+ * This file provides functions to append the current session ID
+ * to all local links in a page.
+ */
+
 import (
 	"bytes"
 	"fmt"
@@ -42,7 +47,7 @@ var (
 // `aData` The web/http response.
 func (hr *tHRefWriter) appendSID(aData []byte) []byte {
 	so := &TSession{sID: hr.sID}
-	if so.EmptySession() {
+	if so.Empty() {
 		return aData
 	}
 	linkMatches := soHrefRE.FindAllSubmatch(aData, -1)
@@ -57,19 +62,20 @@ func (hr *tHRefWriter) appendSID(aData []byte) []byte {
 			(c) links to internal pages with CGI arguments
 	*/
 	for l, cnt := len(linkMatches), 0; cnt < l; cnt++ {
-		if 0 == len(linkMatches[cnt][2]) {
+		link := linkMatches[cnt][2]
+		if 0 == len(link) {
 			continue
 		}
-		if soSchemeRE.Match(linkMatches[cnt][2]) {
+		if soSchemeRE.Match(link) {
 			continue // skip links to external sites
 		}
-		if excludeURL(string(linkMatches[cnt][2])) {
+		if excludeURL(string(link)) {
 			continue // skip excluded URLs
 		}
 		repl := fmt.Sprintf("%s%s%s%s%s",
 			linkMatches[cnt][1],
-			linkMatches[cnt][2],
-			soLookupCGIchar[0 < bytes.IndexRune(linkMatches[cnt][2], '?')],
+			link,
+			soLookupCGIchar[0 < bytes.IndexRune(link, '?')],
 			cgi,
 			linkMatches[cnt][3])
 		aData = bytes.ReplaceAll(aData, linkMatches[cnt][0], []byte(repl))
