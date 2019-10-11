@@ -377,7 +377,8 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 
 				// prepare a reference for `GetSession()`
 				ctx := context.WithValue(aRequest.Context(), soSidName, session.sID)
-				aRequest = aRequest.WithContext(ctx)
+				// to not loose any data we want a deep copy here
+				aRequest = aRequest.Clone(ctx)
 
 				// the original handler can access the session now
 				aHandler.ServeHTTP(hr, aRequest)
