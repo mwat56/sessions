@@ -1,5 +1,5 @@
 /*
-   Copyright © 2019 M.Watermann, 10247 Berlin, Germany
+   Copyright © 2019, 2020 M.Watermann, 10247 Berlin, Germany
                   All rights reserved
                EMail : <support@mwat.de>
 */
@@ -180,7 +180,7 @@ func (so *TSession) ID() string {
 	return so.sID
 } // ID()
 
-// Len returns the current length of the list of session vars.
+// Len returns the current length of the list of session variables.
 func (so *TSession) Len() int {
 	result := so.request(smSessionLen, "", nil)
 	if rLen, ok := result.sValue.(int); ok {
@@ -321,8 +321,8 @@ func checkSessionDir(aSessionDir string) (rDir string, rErr error) {
 	}
 	if fi, err := os.Stat(rDir); nil != err {
 		if e, ok := err.(*os.PathError); ok && (syscall.ENOENT == e.Err) {
-			fmode := os.ModeDir | 0775
-			rErr = os.MkdirAll(filepath.FromSlash(rDir), fmode)
+			fMode := os.ModeDir | 0775
+			rErr = os.MkdirAll(filepath.FromSlash(rDir), fMode)
 		} else {
 			rErr = err
 		}

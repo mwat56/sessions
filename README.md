@@ -31,7 +31,7 @@ Which is bad.
 In practice `cookies` are basically an invasion into the user's property (`cookies` claim disk space and require additional electricity for processing) and they are, by definition, kind of a surveillance and tracking tool.
 Nobody who has their user's best interest in mind would consider using `cookies`.
 Their only advantage is that they are easy to implement – which was kind of the point initially: ease of implementation.
-On the other hand the remote users were considered just a passive and obedient consumer – an essumption you can't really make in general:
+On the other hand the remote users were considered just a passive and obedient consumer – an assumption you can't really make in general:
 Since `cookies` are stored on the remote user's computer you don't really have control over that piece of data but instead the remote user's computer (which means the remote user) ultimately controls this data and thus can easily manipulate it.
 In other words: _`cookies` are inherently insecure_.
 It's clear that nowadays – with data security and the user's privacy in mind – using `cookies` is just an outdated technique.
@@ -45,13 +45,13 @@ So if you care for a barrier-free web-presentation and want to respect privacy a
 Another flaw you'll find in the literature about user sessions is the fact that it's often primarily considered in connection with users who are in one way or another _logged in_ with the web-server.
 But that is only _one_ possible reason for considering some kind of session (data) store.
 Others may include, for example, individual navigation history (e.g. breadcrumbs), configuration data, personal preferences, etc.
-In any case, session data should be able to transcent certain states of a user's connection.
+In any case, session data should be able to transcend certain states of a user's connection.
 And – that's a very important point – sessions should never _require_ a user to `log in`.
 The conception of the internet (more than a decade before that term became a synonym for commercial enterprise in the early 90s of the last century) was based on the idea of providing free access to as many data (i.e. knowledge) for as many people as possible.
 Apart from other things that means: session data should never be used as a kind of lock-in or surveillance measure.
 
 Some people argue that cookies are technically necessary because without them you couldn't implement something like shopping carts etc.
-However, those peoply clearly confuse necessity with ease or comfort.
+However, those people clearly confuse necessity with ease or comfort.
 
 The ease of use for the application developer was mentioned before (when discussing the inherent badness of `cookies`).
 That critique does not, however, mean that it should be difficult to implement session handling as such.
@@ -143,7 +143,7 @@ The same is true if you simply don't use the session instance to store any data 
 Or – you could just ignore this inconvenience and let the library's internal Garbage Collector take care of the unneeded sessions.
 Empty sessions (i.e. sessions with no data added to it) will not be saved to disk.
 
-To further mitigate the problem with creating sessions for e.g. media files there is a function to declare certains URLs to skip in session handling:
+To further mitigate the problem with creating sessions for e.g. media files there is a function to declare certain URLs to skip in session handling:
 
 	// ExcludePaths appends the `aPath` arguments to the list of
 	// ignored URL paths.
@@ -219,7 +219,7 @@ To be on the safe side the GC runs in background with an interval of twice the T
 
 ## Licence
 
-        Copyright © 2019 M.Watermann, 10247 Berlin, Germany
+        Copyright © 2019, 2020 M.Watermann, 10247 Berlin, Germany
                         All rights reserved
                     EMail : <support@mwat.de>
 

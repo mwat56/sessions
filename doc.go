@@ -1,8 +1,8 @@
 /*
 
-Package sessions implements an cookie-free session handling middleware plugin.
+Package sessions implements a cookie-free session handling middleware plugin.
 
-    Copyright © 2019 M.Watermann, 10247 Berlin, Germany
+    Copyright © 2019, 2020 M.Watermann, 10247 Berlin, Germany
                     All rights reserved
                 EMail : <support@mwat.de>
 
