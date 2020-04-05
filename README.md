@@ -20,6 +20,8 @@
 		- [GC](#gc)
 	- [Licence](#licence)
 
+----
+
 ## Purpose / About
 
 I wanted a session data solution that's user-friendly – including privacy-friendly.
@@ -228,3 +230,5 @@ To be on the safe side the GC runs in background with an interval of twice the T
 > This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 >
 > You should have received a copy of the GNU General Public License along with this program. If not, see the [GNU General Public License](http://www.gnu.org/licenses/gpl.html) for details.
+
+----
