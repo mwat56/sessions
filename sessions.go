@@ -334,13 +334,17 @@ func checkSessionDir(aSessionDir string) (rDir string, rErr error) {
 	return
 } // checkSessionDir()
 
+var (
+	// Make sure the background monitor is started only once.
+	soWrapOnce sync.Once
+)
+
 // Wrap initialises the session handling.
 //
-//	`aHandler` responds to the actual HTTP request.
+//	`aHandler` The actual responder to the HTTP requests.
 //	`aSessionDir` is the name of the directory to store session files.
 func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
-	var doOnce sync.Once
-	doOnce.Do(func() {
+	soWrapOnce.Do(func() {
 		if dir, err := checkSessionDir(aSessionDir); nil != err {
 			log.Fatalf("%s: %v", os.Args[0], err)
 		} else {
