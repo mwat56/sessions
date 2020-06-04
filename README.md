@@ -28,19 +28,19 @@ I wanted a session data solution that's user-friendly – including privacy-frie
 When doing some research about saving/retrieving sessions data with `Go` (aka `Golang`) you'll find some slightly different solutions which have, however, one detail in common: they all depend on socalled internet `cookies`.
 Which is bad.
 
-> _Cookies are bad_.
+> _Cookies are (usually) bad_.
 
 In practice `cookies` are basically an invasion into the user's property (`cookies` claim disk space and require additional electricity for processing) and they are, by definition, kind of a surveillance and tracking tool.
-Nobody who has their user's best interest in mind would consider using `cookies`.
+Nobody who has their user's best interest in mind would consider using `cookies` under normal circumstance.
 Their only advantage is that they are easy to implement – which was kind of the point initially: ease of implementation.
-On the other hand the remote users were considered just a passive and obedient consumer – an assumption you can't really make in general:
+On the other hand the remote users were considered just a passive and obedient consumer – an assumption, however, you can't really make in general:
 Since `cookies` are stored on the remote user's computer you don't really have control over that piece of data but instead the remote user's computer (which means the remote user) ultimately controls this data and thus can easily manipulate it.
 In other words: _`cookies` are inherently insecure_.
-It's clear that nowadays – with data security and the user's privacy in mind – using `cookies` is just an outdated technique.
+It's clear that nowadays – with data security and the user's privacy in mind – using `cookies` is basically an outdated technique.
 It's also clear that harvesting the user's facilities (including disk space and electricity) should be avoided wherever possible.
 
 Additionally using `Cookies` requires you to use `JavaScript` as well (which is another barrier best to be avoided).
-In the European Union – with all its currently 28 member countries – `Cookies` are allowed only if the user explicitly agrees; in other words: they may _not be set automatically_.
+In the European Union – with all its currently 27 member countries – `Cookies` are allowed only if the user explicitly agrees; in other words: they may _not be set automatically_ and silently.
 And to get the user's consent you'd need JavaScript code which then – _after_ reading the user's reaction – either sets a `Cookie` _or not_.
 So if you care for a barrier-free web-presentation and want to respect privacy and data-protection laws you can't use `Cookies`.
 
