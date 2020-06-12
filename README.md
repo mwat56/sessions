@@ -6,7 +6,7 @@
 [![Issues](https://img.shields.io/github/issues/mwat56/sessions.svg)](https://github.com/mwat56/sessions/issues?q=is%3Aopen+is%3Aissue)
 [![Size](https://img.shields.io/github/repo-size/mwat56/sessions.svg)](https://github.com/mwat56/sessions/)
 [![Tag](https://img.shields.io/github/tag/mwat56/sessions.svg)](https://github.com/mwat56/sessions/tags)
-[![License](https://img.shields.io/github/license/mwat56/sessions.svg)](https://github.com/mwat56/sessions/blob/master/LICENSE)
+[![License](https://img.shields.io/github/license/mwat56/sessions.svg)](https://github.com/mwat56/sessions/blob/main/LICENSE)
 
 - [Sessions](#sessions)
 	- [Purpose / About](#purpose--about)
