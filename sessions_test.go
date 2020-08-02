@@ -17,6 +17,7 @@ import (
 
 func initTestSession() string {
 	sdir, _ := checkSessionDir("./sessions")
+	soSessionChannel = make(chan tShRequest, 1)
 	go goMonitor(sdir, soSessionChannel)
 	sData := make(tSessionData)
 	sData["Datum"] = time.Now()
@@ -45,6 +46,12 @@ func initRequest() (string, *http.Request) {
 	return sid, result
 } // initRequest()
 
+func stopSession() {
+	soSessionChannel <- tShRequest{
+		rType: smTerminate,
+	}
+} // stopSession()
+
 func Test_newID(t *testing.T) {
 	tests := []struct {
 		name string
@@ -55,6 +62,7 @@ func Test_newID(t *testing.T) {
 		{" 2", 32},
 		{" 3", 32},
 	}
+	initTestSession()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := newSID(); len(got) != tt.want {
@@ -62,6 +70,7 @@ func Test_newID(t *testing.T) {
 			}
 		})
 	}
+	stopSession()
 } // Test_newID()
 
 func TestGetSession(t *testing.T) {
@@ -88,6 +97,7 @@ func TestGetSession(t *testing.T) {
 			}
 		})
 	}
+	stopSession()
 } // TestGetSession()
 
 func TestTSession_Get(t *testing.T) {
@@ -122,6 +132,7 @@ func TestTSession_Get(t *testing.T) {
 			}
 		})
 	}
+	stopSession()
 } // TestTSession_Get()
 
 func TestTSession_GetBool(t *testing.T) {
@@ -162,6 +173,7 @@ func TestTSession_GetBool(t *testing.T) {
 			}
 		})
 	}
+	stopSession()
 } // TestTSession_GetBool()
 
 func TestTSession_GetFloat(t *testing.T) {
@@ -202,6 +214,7 @@ func TestTSession_GetFloat(t *testing.T) {
 			}
 		})
 	}
+	stopSession()
 } // TestTSession_GetFloat()
 
 func TestTSession_GetInt(t *testing.T) {
@@ -239,6 +252,7 @@ func TestTSession_GetInt(t *testing.T) {
 			}
 		})
 	}
+	stopSession()
 } // TestTSession_GetInt()
 
 func TestTSession_GetString(t *testing.T) {
@@ -279,6 +293,7 @@ func TestTSession_GetString(t *testing.T) {
 			}
 		})
 	}
+	stopSession()
 } // TestTSession_GetString()
 
 func TestTSession_GetTime(t *testing.T) {
@@ -323,6 +338,7 @@ func TestTSession_GetTime(t *testing.T) {
 			}
 		})
 	}
+	stopSession()
 } // TestTSession_GetTime()
 
 func TestTSession_Len(t *testing.T) {
@@ -354,6 +370,7 @@ func TestTSession_Len(t *testing.T) {
 			}
 		})
 	}
+	stopSession()
 } // TestTSession_Len()
 
 func TestTSession_request(t *testing.T) {
@@ -394,6 +411,7 @@ func TestTSession_request(t *testing.T) {
 			}
 		})
 	}
+	stopSession()
 } // TestTSession_request()
 
 func TestTSession_Set(t *testing.T) {
@@ -433,4 +451,5 @@ func TestTSession_Set(t *testing.T) {
 			}
 		})
 	}
+	stopSession()
 } // TestTSession_Set()
