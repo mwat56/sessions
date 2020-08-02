@@ -24,13 +24,13 @@ type (
 	// `tSessionData` stores the session data.
 	tSessionData map[string]interface{}
 
-	// `tShList` is the list of known sessions
+	// `tShList` is the list of known sessions.
 	tShList map[string]*tSessionData
 
-	// `tShLookupType` is the kind of request to `goMonitor()`
+	// `tShLookupType` is the kind of request to `goMonitor()`.
 	tShLookupType int
 
-	// `tShRequest` is the request structure channelled to `goMonitor()`
+	// `tShRequest` is the request structure channelled to `goMonitor()`.
 	tShRequest struct {
 		rKey   string
 		rSID   string
@@ -67,8 +67,8 @@ const (
 //
 // This function is called from `goGC()`
 //
-// We need this additional level of indirection to delete both, the
-// session data in memory and the session file.
+// We need this additional level of indirection to delete both,
+// the session data in memory and the session file.
 func goDel(aSID string) {
 	answer := make(chan *TSession)
 	defer close(answer)
@@ -94,13 +94,17 @@ func goGC(aSessionDir string) {
 	if nil != err {
 		return
 	}
-	for _, file := range files {
-		fi, err := os.Stat(file)
-		if nil != err {
+	var (
+		// re-use variables instead of re-creating them in the loop
+		fi          os.FileInfo
+		file, fName string
+	)
+	for _, file = range files {
+		if fi, err = os.Stat(file); nil != err {
 			continue
 		}
 		if fi.ModTime().Before(expired) {
-			fName := filepath.Base(file)
+			fName = filepath.Base(file)
 			go goDel(fName[:len(fName)-4])
 		}
 	}
@@ -113,9 +117,10 @@ func goGC(aSessionDir string) {
 func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 	shList := make(tShList, 32) // list of active sessions
 	go goGC(aSessionDir)        // cleanup old session files
+
 	gcInterval := time.Duration(soSessionTTL<<1)*time.Second + 1
-	timer := time.NewTimer(gcInterval)
-	defer timer.Stop()
+	gcTimer := time.NewTimer(gcInterval)
+	defer gcTimer.Stop()
 
 	for { // wait for requests
 		select {
@@ -200,12 +205,20 @@ func goMonitor(aSessionDir string, aRequest <-chan tShRequest) {
 				request.reply <- &TSession{sID: request.rSID}
 
 			case smTerminate:
+				if chLen := len(aRequest); 0 < chLen {
+					for range aRequest {
+						chLen--
+						if 0 == chLen {
+							return
+						}
+					}
+				}
 				return
 			} // switch
 
-		case <-timer.C:
+		case <-gcTimer.C:
 			go goGC(aSessionDir)
-			timer.Reset(gcInterval)
+			gcTimer.Reset(gcInterval)
 		} // select
 	} // for
 } // goMonitor()
