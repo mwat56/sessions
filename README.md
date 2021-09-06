@@ -221,7 +221,7 @@ To be on the safe side the GC runs in background with an interval of twice the T
 
 ## Licence
 
-        Copyright © 2019, 2020 M.Watermann, 10247 Berlin, Germany
+        Copyright © 2019, 2021 M.Watermann, 10247 Berlin, Germany
                         All rights reserved
                     EMail : <support@mwat.de>
 
