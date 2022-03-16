@@ -1,5 +1,7 @@
 *~
 .git/
+.github
+.gitignore
 *.ini
 *.log
 sessions/

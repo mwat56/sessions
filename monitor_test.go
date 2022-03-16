@@ -3,7 +3,6 @@
                   All rights reserved
                EMail : <support@mwat.de>
 */
-
 package sessions
 
 import (
