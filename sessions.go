@@ -1,5 +1,5 @@
 /*
-   Copyright © 2019, 2022 M.Watermann, 10247 Berlin, Germany
+   Copyright © 2019, 2024  M.Watermann, 10247 Berlin, Germany
                   All rights reserved
                EMail : <support@mwat.de>
 */
@@ -326,7 +326,7 @@ func checkSessionDir(aSessionDir string) (rDir string, rErr error) {
 			rErr = err
 		}
 	} else if !fi.IsDir() {
-		//lint:ignore ST1005 – Capitalisation wanted
+		//lint:ignore ST1005 - Capitalisation wanted
 		rErr = fmt.Errorf("Not a directory: %q", rDir)
 	}
 
@@ -340,9 +340,9 @@ var (
 
 // Wrap initialises the session handling.
 //
-//	`aHandler` The actual responder to the HTTP requests.
+//	`aNext` The actual responder to the HTTP requests.
 //	`aSessionDir` is the name of the directory to store session files.
-func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
+func Wrap(aNext http.Handler, aSessionDir string) http.Handler {
 	soWrapOnce.Do(func() {
 		if dir, err := checkSessionDir(aSessionDir); nil != err {
 			log.Fatalf("%s: %v", os.Args[0], err)
@@ -354,7 +354,7 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 	return http.HandlerFunc(
 		func(aWriter http.ResponseWriter, aRequest *http.Request) {
 			if excludeURL(aRequest.URL.Path) {
-				aHandler.ServeHTTP(aWriter, aRequest)
+				aNext.ServeHTTP(aWriter, aRequest)
 				return
 			}
 
@@ -384,14 +384,14 @@ func Wrap(aHandler http.Handler, aSessionDir string) http.Handler {
 				aRequest = aRequest.Clone(ctx)
 
 				// the original handler can access the session now
-				aHandler.ServeHTTP(hr, aRequest)
+				aNext.ServeHTTP(hr, aRequest)
 
 				// save the possibly updated session data
 				session.request(smStoreSession, "", nil)
 
 			default:
 				// run the original handler
-				aHandler.ServeHTTP(aWriter, aRequest)
+				aNext.ServeHTTP(aWriter, aRequest)
 			}
 		})
 } // Wrap()
